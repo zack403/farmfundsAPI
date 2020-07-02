@@ -1,0 +1,6 @@
+{
+    "jwtPrivateKey": "",
+    "port": "3000",
+    "requiresAuth": false
+}
+  
