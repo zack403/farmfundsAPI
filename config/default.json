@@ -1,5 +1,5 @@
 {
-    "jwtPrivateKey": "",
+    "fm_key": "",
     "port": "3000",
     "requiresAuth": false
 }
