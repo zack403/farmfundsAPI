@@ -35,10 +35,9 @@ const User = sequelize.define('User', {
         allowNull : false
     },
     isAdmin: {
-        type: DataTypes.BOOLEAN
-    },
-    createdAt: {
-        type: DataTypes.DATE
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     }
 })
 
@@ -47,10 +46,9 @@ const validateUser = user => {
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
       email: Joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
-      password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).min(7).alphanum().max(255).required(),
+      password: Joi.string().min(7).alphanum().max(255).required(),
       confirmPassword: Joi.ref('password'),
-      PhoneNo : Joi.string().required(),
-      createdAt : Joi.date()
+      phoneNo : Joi.string().required()
     }).with('firstName', 'lastName')
     .with('password', 'confirmPassword');
     return schema.validate(user);
