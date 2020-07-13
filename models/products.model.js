@@ -3,18 +3,17 @@ const sequelize = require('../startup/database');
 
 const Product = sequelize.define('Product', {
     id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
+        type: DataTypes.UUID,
         allowNull: false,
         primaryKey: true
     },
-    title: {
+    productName: {
         type: DataTypes.STRING,
         allowNull : false
     },
-    price: {
-        type: DataTypes.DOUBLE,
-        allowNull : false
+    imageUrl: {
+        type: DataTypes.STRING,
+        allowNull: false 
     },
     description: {
         type: DataTypes.STRING,
@@ -26,4 +25,16 @@ const Product = sequelize.define('Product', {
     }
 })
 
-module.exports = Product;
+const validateProduct = product => {
+    const schema =  Joi.object({
+      productName: Joi.string().required(),
+      description: Joi.string(),
+      specification: Joi.string()
+    })
+
+    return schema.validate(product);
+  }
+
+
+  module.exports.Product = Product;
+  module.exports.IsValid = validateProduct;

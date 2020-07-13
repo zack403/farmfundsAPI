@@ -5,8 +5,8 @@ const Joi = require('@hapi/joi');
 
 const User = sequelize.define('User', {
     id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         allowNull: false,
         primaryKey: true
     },
@@ -18,9 +18,23 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull : false
     },
+    middleName : {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    bankName: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    acctNo: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
     email: {
         type: DataTypes.STRING,
-        allowNull : false
+        allowNull : false,
+        unique: true
     },
     phoneNo: {
         type: DataTypes.STRING,
@@ -45,6 +59,9 @@ const validateUser = user => {
     const schema =  Joi.object({
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
+      middleName: Joi.string(),
+      bankName: Joi.string().required(),
+      acctNo: Joi.string().required(),
       email: Joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
       password: Joi.string().min(7).alphanum().max(255).required(),
       confirmPassword: Joi.ref('password'),
