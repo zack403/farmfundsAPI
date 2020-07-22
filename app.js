@@ -8,9 +8,12 @@ const {User} = require('./models/users.model');
 const {Investment} = require('./models/investments.model');
 const {ProductPrice} = require('./models/productPrice.model');
 const {Product} = require('./models/products.model');
+const bodyParser = require('body-parser');
 
 
 const path = require('path');
+
+app.use(bodyParser.urlencoded({ extended: false }))
 
 
 app.use(express.static(path.join(__dirname, 'images')));
@@ -40,7 +43,7 @@ ProductPrice.belongsTo(Product, {constraints: true, onDelete: 'CASCADE'});
 Product.hasMany(ProductPrice);
 
 
-sequelize.sync().then(s => {
+sequelize.sync({force: true}).then(s => {
     app.listen(port, () => winston.info(`Listening on port ${port}...`));
 }).catch(e => {
     console.log(e)

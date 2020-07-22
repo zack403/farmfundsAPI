@@ -43,7 +43,27 @@ const Purchase = sequelize.define('Purchase', {
     userID: {
         type: DataTypes.UUID,
         allowNull: true
+    },
+    status: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "Pending"
     }
 })
 
-module.exports.Purchase = Purchase;
+const validatePurchase = pur => {
+    const schema =  Joi.object({
+      name: Joi.string().required(),
+      email: Joi.string().required(),
+      phoneNo: Joi.string().required(),
+      address: Joi.string().required(),
+      product: Joi.string().required(),
+      unit: Joi.number().integer().required(),
+      type: Joi.string().required()
+    })
+    return schema.validate(pur);
+  }
+
+
+  module.exports.Purchase = Purchase;
+  module.exports.IsValid = validatePurchase;

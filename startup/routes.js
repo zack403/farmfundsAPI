@@ -14,9 +14,9 @@ module.exports = app => {
   app.use('/api/v1/auth', auth);
   app.use('/api/v1/users', user);
   app.use('/api/v1/product', product);
-  // app.use('/api/v1/package', package);
-  // app.use('/api/v1/purchase', purchase);
-  // app.use('/api/v1/investment', investment);
-  // app.use('/api/v1/dashboard', dashboard);
+  app.use('/api/v1/package', package);
+  app.use('/api/v1/purchase', purchase);
+  app.use('/api/v1/investment', investment);
+  app.use('/api/v1/dashboard', dashboard);
   app.use(errorHandler);
 }

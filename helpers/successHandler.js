@@ -1,6 +1,6 @@
-module.exports = (status, error) => {
+module.exports = (status, data) => {
     return {
         status : status,
-        message : error
+        data : data
     }
 }

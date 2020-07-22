@@ -28,7 +28,7 @@ router.get('/', authorizedMiddleWare, async (req, res) => {
 router.get('/:id', authorizedMiddleWare, async ({params: { id: userId } }, res) => {
     if(!userId) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
-    const singleUser = await await User.findByPk(userId);
+    const singleUser = await User.findByPk(userId);
     if(singleUser === null) return res.status(404).send(errorHandler(404, 'User not found'));
 
     delete singleUser.dataValues.password;

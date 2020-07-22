@@ -24,6 +24,14 @@ const Investment = sequelize.define('Investment', {
         type: DataTypes.STRING,
         allowNull: false 
     },
+    unit: {
+        type: DataTypes.INTEGER,
+        allowNull: false 
+    },
+    profit: {
+        type: DataTypes.INTEGER,
+        allowNull: false 
+    },
     startDate: {
         type: DataTypes.DATE,
         allowNull : false
@@ -39,4 +47,20 @@ const Investment = sequelize.define('Investment', {
     }
 })
 
-module.exports.Investment = Investment;
+const validateInvestment = inv => {
+    const schema =  Joi.object({
+      package: Joi.string().required(),
+      amount: Joi.string().required(),
+      cycle: Joi.string().required(),
+      location: Joi.string().required(),
+      startDate: Joi.date().required(),
+      endDate: Joi.date().required(),
+      unit: Joi.number().integer().required(),
+      profit: Joi.number().integer().required()
+    })
+    return schema.validate(inv);
+  }
+
+
+  module.exports.Investment = Investment;
+  module.exports.IsValid = validateInvestment;

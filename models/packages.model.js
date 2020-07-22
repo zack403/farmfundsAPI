@@ -12,6 +12,10 @@ const Package = sequelize.define('Package', {
         type: DataTypes.STRING,
         allowNull : false
     },
+    amountPerUnit: {
+        type: DataTypes.INTEGER,
+        allowNull : false
+    },
     profit: {
         type: DataTypes.STRING,
         allowNull : false
@@ -34,4 +38,19 @@ const Package = sequelize.define('Package', {
     }
 })
 
-module.exports.Package = Package;
+const validatePackage = pack => {
+    const schema =  Joi.object({
+      packageName: Joi.string().required(),
+      profit: Joi.string().required(),
+      cycle: Joi.string().required(),
+      location: Joi.string().required(),
+      status: Joi.string().required(),
+      unit: Joi.number().integer().required(),
+      amountPerUnit: Joi.number().integer().required()
+    })
+    return schema.validate(pack);
+  }
+
+
+  module.exports.Package = Package;
+  module.exports.IsValid = validatePackage;

@@ -7,7 +7,10 @@ const successHandler = require('../helpers/successHandler');
 const getPagination = require('../helpers/getPagination');
 const getPagingData = require('../helpers/getPagingData');
 const { Op } = require("sequelize");
+const {ProductPrice} = require('../models/productPrice.model');
 const upload = require('../middlewares/upload');
+const { uuid } = require('uuidv4');
+
 
 
 
@@ -37,27 +40,40 @@ router.get('/:id', authorizedMiddleWare, async ({params: { id: productId } }, re
 })
 
 router.post('/', [authorizedMiddleWare, upload.single('image')], async(req, res) => {
-    const image = req.file;
-    if (!image) return res.status(400).send(errorHandler(400, 'Product image is required'));
+    if (!req.file) return res.status(400).send(errorHandler(400, 'Product image is required'));
 
     const {error} = IsValid(req.body);
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
-    const imageUrl = image.path;
+    req.body.id = uuid();
+
+    const imageUrl = req.file.path;
     req.body.imageUrl = imageUrl;
 
-    const isCreated = await Product.create(req.body);
-    if(isCreated) return res.status(201).send({status: 201, message: "Product successfully created"});
+    let itemToSave = [];
+    let item = {};
 
+
+    for (const pr of req.body.pricelistDetails) {
+        item.productId = req.body.id;
+        item.productName = pr.productName;
+        item.amount = pr.amount;
+        item.priceDescription = pr.priceDescription;
+        itemToSave.push(item);
+    }
+    
+    const isProductCreated = await Product.create(req.body);
+    const isPricelistAdded = await ProductPrice.bulkCreate(itemToSave);
+
+    if(isProductCreated && isPricelistAdded) return res.status(201).send({status: 201, message: "Product successfully created"});
 
 });
 
 router.put('/:id', [authorizedMiddleWare, upload.single('image')], async(req, res) => {
-    const image = req.file;
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
-    if(image) {
-        req.body.imageUrl = image.path;
+    if(req.file) {
+        req.body.imageUrl = req.file.path;
     }
 
     const updated = await Product.update(req.body, {where: { id: req.params.id }});
