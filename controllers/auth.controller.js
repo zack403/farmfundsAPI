@@ -40,11 +40,11 @@ router.post('/register', async (req, res) => {
   
       isValid.dataValues.fullName = `${isValid.dataValues.firstName} ${isValid.dataValues.lastName}`
       const token = generateAuthToken(isValid.dataValues); // assing a token to the user here
-      isValid.dataValues.token = token;
 
       res.status(200).send({
         status : 200,
-        data : isValid.dataValues
+        data : isValid.dataValues,
+        token: token
       });
   });
 

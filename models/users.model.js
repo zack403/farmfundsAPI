@@ -59,8 +59,9 @@ const validateUser = user => {
     const schema =  Joi.object({
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
-      middleName: Joi.string(),
+      middleName: Joi.string().optional(),
       bankName: Joi.string().required(),
+      isAdmin: Joi.boolean().optional(),
       acctNo: Joi.string().required(),
       email: Joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
       password: Joi.string().min(7).alphanum().max(255).required(),

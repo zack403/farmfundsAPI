@@ -31,17 +31,17 @@ router.get('/:id', authorizedMiddleWare, async ({params: { id: userId } }, res) 
     const singleUser = await User.findByPk(userId);
     if(singleUser === null) return res.status(404).send(errorHandler(404, 'User not found'));
 
-    delete singleUser.dataValues.password;
+    delete singleUser.dataValues.password; 
     delete singleUser.dataValues.confirmPassword; 
     return res.status(200).send(successHandler(200, singleUser.dataValues));
 
 })
 
-router.put('/:id', authorizedMiddleWare, async(req, res) => {
-    if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
+router.put('/', authorizedMiddleWare, async(req, res) => {
+    if(!req.body.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
-    const updated = await User.update(req.body, {where: { id: req.params.id }});
-    if(updated == 1) return res.status(200).send(successHandler(200, "User successfully updated"));
+    const updated = await User.update(req.body, {where: { id: req.body.id }});
+    if(updated == 1) return res.status(200).send(successHandler(200, "Profile successfully updated"));
 
     return res.status(400).send(errorHandler(400, "Unable to update"));
 

@@ -43,7 +43,7 @@ ProductPrice.belongsTo(Product, {constraints: true, onDelete: 'CASCADE'});
 Product.hasMany(ProductPrice);
 
 
-sequelize.sync({force: true}).then(s => {
+sequelize.sync({alter: true}).then(s => {
     app.listen(port, () => winston.info(`Listening on port ${port}...`));
 }).catch(e => {
     console.log(e)

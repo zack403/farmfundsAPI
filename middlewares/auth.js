@@ -3,7 +3,8 @@ const config = require("config");
 const errorHandler = require('../helpers/errorHandler');
 
 module.exports = (req, res, next) => {
-  const token = req.header("Authorization");
+  let token = req.header("Authorization");
+  token = token.replace("Bearer ", "")
   if (!token){
     const tokenError = errorHandler(403,"Access denied. No token provided.");
     return res.status(403).send(tokenError);

@@ -40,7 +40,7 @@ const Purchase = sequelize.define('Purchase', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    userID: {
+    userId: {
         type: DataTypes.UUID,
         allowNull: true
     },
