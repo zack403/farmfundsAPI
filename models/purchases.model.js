@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../startup/database');
+const Joi = require('@hapi/joi');
+
 
 const Purchase = sequelize.define('Purchase', {
     id: {
@@ -20,21 +22,9 @@ const Purchase = sequelize.define('Purchase', {
         type: DataTypes.STRING,
         allowNull: false 
     },
-    Address: {
+    address: {
         type: DataTypes.STRING,
         allowNull : false
-    },
-    product: {
-        type: DataTypes.STRING,
-        allowNull : false
-    },
-    unit: {
-        type: DataTypes.INTEGER,
-        allowNull : false
-    },
-    amount: {
-        type: DataTypes.DOUBLE,
-        allowNull: false,
     },
     type: {
         type: DataTypes.STRING,
@@ -57,11 +47,9 @@ const validatePurchase = pur => {
       email: Joi.string().required(),
       phoneNo: Joi.string().required(),
       address: Joi.string().required(),
-      product: Joi.string().required(),
-      unit: Joi.number().integer().required(),
       type: Joi.string().required()
     })
-    return schema.validate(pur);
+    return schema.validate(pur, {allowUnknown: true});
   }
 
 

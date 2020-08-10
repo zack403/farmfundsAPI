@@ -3,37 +3,37 @@ const sequelize = require('../startup/database');
 const Joi = require('@hapi/joi');
 
 
-const ProductPrice = sequelize.define('ProductPrice', {
+const FoodMarket = sequelize.define('FoodMarket', {
     id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4, 
         allowNull: false,
-        primaryKey: true
+        primaryKey: true,
     },
     productName: {
         type: DataTypes.STRING,
-        allowNull : false
+        allowNull : false,
+        unique: true
     },
-    priceDescription: {
-        type: DataTypes.STRING,
-        allowNull : false
-    },
-    amount: {
+    price: {
         type: DataTypes.DOUBLE,
+        allowNull: true
+    },
+    imageUrl: {
+        type: DataTypes.STRING,
         allowNull: false 
     }
 })
 
-const validateProductPrice = product => {
+const validateFoodMarket = product => {
     const schema =  Joi.object({
       productName: Joi.string().required(),
-      amount: Joi.string().required(),
-      priceDescription: Joi.string().required()
+      price: Joi.optional(),
     })
 
     return schema.validate(product);
   }
 
 
-  module.exports.ProductPrice = ProductPrice;
-  module.exports.IsValid = validateProductPrice;
+  module.exports.FoodMarket = FoodMarket;
+  module.exports.IsValid = validateFoodMarket;

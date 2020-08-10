@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../startup/database');
+const Joi = require('@hapi/joi');
+
 
 const Package = sequelize.define('Package', {
     id: {

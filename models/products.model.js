@@ -1,9 +1,12 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../startup/database');
+const Joi = require('@hapi/joi');
+
 
 const Product = sequelize.define('Product', {
     id: {
         type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4, 
         allowNull: false,
         primaryKey: true
     },

@@ -4,22 +4,35 @@ sgMail.setApiKey(config.get('sendgrid_key'));
 
 
 
-module.exports = async function(params1, params2)  {
+
+module.exports = async function({mailContent1, mailContent2, attachment, fileName})  {
     const messages = [
         {
-            to: params1.email,
-            from: 'Farm-Funds Africa',
-            subject: params1.subject,
-            text: '',
-            html: params1.body
+            to: mailContent1.email,
+            from: 'info@farmfundsafrica.com',
+            subject: mailContent1.subject,
+            html: mailContent1.body
         },
         {
-            to: params2.email,
-            from: 'Farm-Funds Africa',
-            subject: params2.subject,
-            text: '',
-            html: params2.body 
+            to: mailContent2.email,
+            from: 'info@farmfundsafrica.com',
+            subject: mailContent2.subject,
+            html: mailContent2.body,
+            attachments: [
+                {
+                  content: attachment,
+                  filename: fileName,
+                  type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  disposition: 'attachment',
+                  contentId: fileName
+                },
+              ],
         }
     ];
-    return await sgMail.send(messages);
+    try {
+        return await sgMail.send(messages);
+    } catch (error) {
+        console.log(error);
+        return await sgMail.send(messages);
+    }
 }

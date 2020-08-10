@@ -7,6 +7,7 @@ const investment = require('../controllers/investment.controller');
 const purchase = require('../controllers/purchase.controller');
 const dashboard = require('../controllers/dashboard.controller');
 const utility = require('../controllers/utility.controller');
+const FoodMarket = require('../controllers/FoodMarket.controller');
 const errorHandler = require('../middlewares/error');
 
 module.exports = app => {
@@ -19,5 +20,6 @@ module.exports = app => {
   app.use('/api/v1/investment', investment);
   app.use('/api/v1/dashboard', dashboard);
   app.use('/api/v1/utility', utility);
+  app.use('/api/v1/foodmarket', FoodMarket);
   app.use(errorHandler);
 }

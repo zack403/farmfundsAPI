@@ -59,7 +59,6 @@ const validateUser = user => {
     const schema =  Joi.object({
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
-      middleName: Joi.string().optional(),
       bankName: Joi.string().required(),
       isAdmin: Joi.boolean().optional(),
       acctNo: Joi.string().required(),
@@ -69,7 +68,7 @@ const validateUser = user => {
       phoneNo : Joi.string().required()
     }).with('firstName', 'lastName')
     .with('password', 'confirmPassword');
-    return schema.validate(user);
+    return schema.validate(user, {allowUnknown: true});
   }
 
 module.exports.User = User;

@@ -2,15 +2,23 @@ const express = require('express');
 const router = express.Router();
 const authorizedMiddleWare = require('../middlewares/auth');
 const {Purchase, IsValid} = require('../models/purchases.model');
+const {PurchaseDetail} = require('../models/purchaseDetails.model');
 const errorHandler = require('../helpers/errorHandler');
 const successHandler = require('../helpers/successHandler');
 const getPagination = require('../helpers/getPagination');
 const getPagingData = require('../helpers/getPagingData');
 const { Op } = require("sequelize");
 const sendMail = require('../services/emailService');
+const { uuid } = require('uuidv4');
+const Excel = require('exceljs');
+const fs = require("fs");
+const isAdmin = require('../middlewares/admin');
 
 
 
+
+let itemToSave = [];
+let item = {};
 
 
 //get all
@@ -23,7 +31,7 @@ router.get('/', authorizedMiddleWare, async (req, res) => {
                                 ]} : null;
 
     const { limit, offset } = getPagination(page, size);
-    const data = await Purchase.findAndCountAll({ where: condition, limit, offset});
+    const data = await Purchase.findAndCountAll({ where: condition, limit, offset, include: PurchaseDetail, distinct: true});
 
     const purchases = getPagingData(data, page, limit);
     return res.status(200).send(purchases);
@@ -33,7 +41,7 @@ router.get('/', authorizedMiddleWare, async (req, res) => {
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
-    const result = await Purchase.findByPk(req.params.id);
+    const result = await Purchase.findByPk(req.params.id, {include: PurchaseDetail});
     if(result === null) return res.status(404).send(errorHandler(404, 'not found'));
 
     return res.status(200).send(successHandler(200, result.dataValues));
@@ -43,44 +51,118 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
 router.post('/', authorizedMiddleWare, async(req, res) => {
     const {error} = IsValid(req.body);
     if (error) return res.status(400).send(errorHandler(400, error.message));
+
+    req.body.id = uuid();
+
+    for (const details of req.body.purchaseDetails) {
+        item.PurchaseId = req.body.id;
+        item.product = details.productName;
+        item.amount = details.amount;
+        item.unit = details.unit;
+        itemToSave.push(item);
+    }
     
     const isCreated = await Purchase.create(req.body);
+    const detailAdded = await PurchaseDetail.bulkCreate(itemToSave);
+
+    const workbook = new Excel.Workbook();
+
+    const worksheet = workbook.addWorksheet('Customer Order Data');
+
+    let row = 0;
+
+    worksheet.getCell(row + 2, 1).value = "Customer Info";
+
+    //parent items
+    worksheet.getCell(row + 3, 1).value = "Name";
+    worksheet.getCell(row + 3, 1).font = {bold: true};
+    worksheet.getCell(row + 3, 2).value = req.body.name;
+
+    worksheet.getCell(row + 4, 1).value = "Phone No";
+    worksheet.getCell(row + 4, 1).font = {bold: true};
+    worksheet.getCell(row + 4, 2).value = req.body.phoneNo;
+
+    worksheet.getCell(row + 5, 1).value = "Address";
+    worksheet.getCell(row + 5, 1).font = {bold: true};
+    worksheet.getCell(row + 5, 2).value = req.body.address;
+
+    worksheet.getCell(row + 6, 1).value = "Email";
+    worksheet.getCell(row + 6, 1).font = {bold: true};
+    worksheet.getCell(row + 6, 2).value = req.body.email;
+
+    worksheet.getCell(row + 8, 1).value = "Customer Orders";
+
+    //child items
+    worksheet.getCell(row + 9, 1).value = "Product";
+    worksheet.getCell(row + 9, 2).value = "Amount";
+    worksheet.getCell(row + 9, 3).value = "Unit";
+    worksheet.getRow(9).font = {bold: true};
+
+    for(const item of req.body.purchaseDetails){
+        worksheet.getCell(row + 10, 1).value = item.productName;
+        worksheet.getCell(row + 10, 2).value = item.amount;
+        worksheet.getCell(row + 10, 3).value = item.unit;
+        row++;
+    }
+
+    worksheet.views = [
+        { state: 'frozen', xSplit: 0, ySplit: 1, activeCell: 'B2' }
+    ]
+      
+
+      const pathToAttachment = `./CustomerOrderExcel/Customer_Orders_${Date.now()}.xlsx`;
+      const fileName = `${req.body.name}_Order.xlsx`;
+
+      await workbook.xlsx.writeFile(pathToAttachment);
+
+      const attachment = fs.readFileSync(pathToAttachment).toString("base64");
 
     //send email about this purchase
     const mailContent1 = {
-        email: req.user.email,
+        email: req.body.email ? req.body.email : req.user.email,
         subject: `Purchase Order Notification Email`,
         body: 
-            `<p>Hi ${req.user.fullName}</p>,<br>`
-            + `<p>You have successfully purchase ${req.body.product}</p><br>`
-            + `<p>We have your address, and we are working on delivering to you right away.</p><br>`
-            + `Thank you for choosing Farm Funds Africa`
+            `<p> Hi ${req.user.fullName}, </p>
+            <p> Your purchase was successful. </p>
+             <p> We have your address, and we are working on delivering to you right away. </p>
+             <b>Thank you for choosing Farm Funds Africa. </b>`
     }
 
     const mailContent2 = {
         email: 'aminuzack7@gmail.com',
         subject: `Purchase Order Notification Email`,
         body: 
-            `<p>Hi there,</p><br>`
-            + `<p>This is to inform you that ${req.user.fullName} have successfully purchase ${req.body.product}</p><br>`
-            + `<p>Here are the details of the customer purchase: </p><br>`
-            + `<p>Product:</p> <strong>${req.body.product}</strong><br>`
-            + `<p>Unit:</p> <strong>${req.body.unit}</strong><br>`
-            + `<p>Amount:</p> <strong>${req.body.amount}</strong><br>`
-            + `<p>Type:</p> <strong>${req.body.type}</strong><br>`
-            + `<p>Address:</p> <strong>${req.body.address}</strong><br>`
-            + `<p>Email:</p> <strong>${req.body.email}</strong><br>`
-            + `<p>Phone No:</p> <strong>${req.body.phoneNo}</strong><br>`
+            `<p> Hi there, </p>
+             <p> This is to inform you that ${req.user.fullName} have successfully made purchase for some of your products. </p>
+             <p> Find in the excel sheet below the details of the purchase. </p>`
     }
 
+    const parameters = {
+        mailContent1,
+        mailContent2,
+        attachment,
+        fileName
+    };
 
-    const result = sendMail(mailContent1, mailContent2);
-    if(isCreated && result) return res.status(201).send({status: 201, message: "Successfully created"});
+    const result = await sendMail(parameters);
+    if(isCreated && detailAdded && result) return res.status(201).send({status: 201, message: "Successfully created"});
 
 });
 
+router.put('/markasdelivered/:id', [authorizedMiddleWare, isAdmin], async(req, res) => {
+    if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
-router.delete('/:id', authorizedMiddleWare, async({params: { id: purchaseId } }, res) => {
+    const item = await Purchase.findOne({where: {id: req.params.id}})
+    if(item != null){
+        const updated = await item.update({status: "Delivered"});
+        if(updated) return res.status(200).send(successHandler(200, "Successfully marked as Delivered"));
+        return res.status(400).send(errorHandler(400, "Unable to update"));
+    }
+    return res.status(400).send(errorHandler(404, "Not found"));
+
+});
+
+router.delete('/:id', [authorizedMiddleWare, isAdmin], async({params: { id: purchaseId } }, res) => {
     if(!purchaseId) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
     const deleted = await Purchase.destroy({where: {id: purchaseId}});
