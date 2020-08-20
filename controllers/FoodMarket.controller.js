@@ -17,7 +17,7 @@ const isAdmin = require('../middlewares/admin');
 
 
 //get all
-router.get('/', [authorizedMiddleWare, isAdmin], async (req, res) => {
+router.get('/', authorizedMiddleWare, async (req, res) => {
     const { page, size, search } = req.query;
     const condition = search ? { productName: { [Op.iLike]: `%${search}%`}} : null;
 

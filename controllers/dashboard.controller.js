@@ -13,7 +13,7 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
    
     const investments = await Investment.findAndCountAll({where: {UserId: req.params.id}});
-    const purchases = await Purchase.findAndCountAll({where: {userId: req.params.id}});
+    const purchases = await Purchase.findAndCountAll({where: {UserId: req.params.id}});
 
     for(const {amount, roi} of investments.rows){
         totalInvAmount.push(amount);

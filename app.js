@@ -41,7 +41,9 @@ let server;
 
 //model relationships
 Investment.belongsTo(User, {constraints: true, onDelete: 'CASCADE'});
+Purchase.belongsTo(User, {constraints: true, onDelete: 'CASCADE'});
 User.hasMany(Investment);
+User.hasMany(Purchase);
 ProductPrice.belongsTo(Product, {constraints: true, onDelete: 'CASCADE'});
 Product.hasMany(ProductPrice);
 PurchaseDetail.belongsTo(Purchase, {constraints: true, onDelete: 'CASCADE'})

@@ -35,7 +35,7 @@ router.get('/', authorizedMiddleWare, async (req, res) => {
 
     const purchases = getPagingData(data, page, limit);
     return res.status(200).send(purchases);
-})
+});
 
 //getby id
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
@@ -155,12 +155,30 @@ router.put('/markasdelivered/:id', [authorizedMiddleWare, isAdmin], async(req, r
     const item = await Purchase.findOne({where: {id: req.params.id}})
     if(item != null){
         const updated = await item.update({status: "Delivered"});
-        if(updated) return res.status(200).send(successHandler(200, "Successfully marked as Delivered"));
+        if(updated) return res.status(200).send(successHandler(200, "Successfully marked as delivered"));
         return res.status(400).send(errorHandler(400, "Unable to update"));
     }
     return res.status(400).send(errorHandler(404, "Not found"));
 
 });
+
+router.patch('/:id', authorizedMiddleWare, async(req, res) => {
+    if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
+
+    const itemToUpdate = await Purchase.findOne({where: {id: req.params.id}, include: PurchaseDetail});
+
+    if(itemToUpdate != null) {
+        try {
+            for(const details of req.body.PurchaseDetails) {
+                await PurchaseDetail.update(details, {where: {id: details.id}});
+            }
+            return res.status(200).send(successHandler(200, "Successfully updated"));
+        } catch (error) {
+            return res.status(400).send(errorHandler(400, "Unable to update"));        
+        }        
+    };
+    return res.status(400).send(errorHandler(404, "Not found"));
+})
 
 router.delete('/:id', [authorizedMiddleWare, isAdmin], async({params: { id: purchaseId } }, res) => {
     if(!purchaseId) return res.status(400).send(errorHandler(400, 'Missing id param'));

@@ -5,6 +5,10 @@ const errorHandler = require('../helpers/errorHandler');
 const config = require('config');
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(config.get('sendgrid_key'));
+const upload = require('../middlewares/upload');
+const authorizedMiddleWare = require('../middlewares/auth');
+
+
 
 
 
@@ -31,6 +35,12 @@ router.get('/contactus', async (req, res) => {
     }
 })
 
+router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpayment')], (req, res) => {
+    if (!req.file) return res.status(400).send(errorHandler(400, 'Proof of payment is required'));
+    let {id} = req.user;
+    const imageUrl = req.file.path;
+
+});
 
 
 const ValidateContactUs = req => {
