@@ -9,7 +9,11 @@ const PurchaseDetail = sequelize.define('PurchaseDetail', {
         allowNull: false,
         primaryKey: true
     },
-    product: {
+    productName: {
+        type: DataTypes.STRING,
+        allowNull : false
+    },
+    productId: {
         type: DataTypes.STRING,
         allowNull : false
     },
@@ -17,9 +21,13 @@ const PurchaseDetail = sequelize.define('PurchaseDetail', {
         type: DataTypes.INTEGER,
         allowNull : false
     },
-    amount: {
+    price: {
         type: DataTypes.DOUBLE,
         allowNull: false,
+    },
+    brand: {
+        type: DataTypes.STRING,
+        allowNull: true,
     }
 })
 

@@ -38,6 +38,10 @@ const Purchase = sequelize.define('Purchase', {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: "Pending"
+    },
+    note: {
+        type: DataTypes.STRING(1234),
+        allowNull: true,
     }
 })
 

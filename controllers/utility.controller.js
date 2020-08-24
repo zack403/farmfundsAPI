@@ -7,8 +7,7 @@ const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(config.get('sendgrid_key'));
 const upload = require('../middlewares/upload');
 const authorizedMiddleWare = require('../middlewares/auth');
-
-
+const {Purchase} = require('../models/purchases.model');
 
 
 
@@ -19,7 +18,7 @@ router.get('/contactus', async (req, res) => {
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
     const msg = {
-            to: 'talk2malk@gmail.com',
+            to: 'info@farmfundsafrica.com',
             from: req.body.email,
             subject: req.body.subject,
             text: req.body.message,
@@ -35,10 +34,36 @@ router.get('/contactus', async (req, res) => {
     }
 })
 
-router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpayment')], (req, res) => {
+router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpayment')], async (req, res) => {
     if (!req.file) return res.status(400).send(errorHandler(400, 'Proof of payment is required'));
-    let {id} = req.user;
+
+    let {id, email} = req.user;
     const imageUrl = req.file.path;
+
+    const item = await Purchase.findOne({where: {UserId: id}})
+    if(item != null){
+        const updated = await item.update({proofOfPayment: imageUrl});
+
+        if(updated) return res.status(200).send(successHandler(200, "File uploaded successfully."));
+        return res.status(400).send(errorHandler(400, "failed to upload"));
+    }
+
+    //send email about the proof of payment
+    const mailContent =  {
+        to: 'info@farmfundsafrica.com',
+        from: 'info@farmfundsafrica.com',
+        subject: 'Proof of payment',
+        html: mailContent2.body,
+        attachments: [
+            {
+              content: attachment,
+              filename: fileName,
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              disposition: 'attachment',
+              contentId: fileName
+            },
+          ],
+    }
 
 });
 

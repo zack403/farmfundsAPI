@@ -29,7 +29,7 @@ router.get('/', authorizedMiddleWare, async (req, res) => {
 })
 
 //getby id
-router.get('/:id', [authorizedMiddleWare, isAdmin], async ({params: { id: foodMarketId } }, res) => {
+router.get('/:id', authorizedMiddleWare, async ({params: { id: foodMarketId } }, res) => {
     if(!foodMarketId) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
     const singleFoodMarket = await FoodMarket.findByPk(foodMarketId);

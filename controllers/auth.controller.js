@@ -38,7 +38,8 @@ router.post('/register', async (req, res) => {
     delete isValid.dataValues.password;
     if (!userPassword) return res.status(400).send(errMessage = errorHandler(400, 'Login Failed, invalid email or password.'));
   
-      isValid.dataValues.fullName = `${isValid.dataValues.firstName} ${isValid.dataValues.middleName} ${isValid.dataValues.lastName}`
+      isValid.dataValues.fullName = isValid.dataValues.middleName ? `${isValid.dataValues.firstName} ${isValid.dataValues.middleName} ${isValid.dataValues.lastName}` 
+      : `${isValid.dataValues.firstName} ${isValid.dataValues.lastName}`
       const token = generateAuthToken(isValid.dataValues); // assing a token to the user here
 
       res.status(200).send({
