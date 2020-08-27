@@ -181,7 +181,7 @@ router.put('/markasdelivered/:id', [authorizedMiddleWare, isAdmin], async(req, r
 
     const item = await Purchase.findOne({where: {id: req.params.id}})
     if(item != null){
-        const updated = await item.update({status: "Delivered"});
+        const updated = await item.update({status: "Delivered", deliveredDate: new Date()});
         if(updated)
         {
             const sub = await Subscribers.findOne({where: {UserId: item.UserId}});

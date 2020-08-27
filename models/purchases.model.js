@@ -42,6 +42,10 @@ const Purchase = sequelize.define('Purchase', {
     note: {
         type: DataTypes.STRING(1234),
         allowNull: true,
+    },
+    deliveredDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
     }
 })
 
