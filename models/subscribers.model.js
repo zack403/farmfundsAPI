@@ -67,7 +67,8 @@ const validateSubscribers = sub => {
       phoneNo: Joi.string().required(),
       paymentType: Joi.string().required(),
       unit: Joi.number().required(),
-      userId: Joi.string().required()
+      UserId: Joi.string().required(),
+      email: Joi.string().required()
     })
     return schema.validate(sub);
   }
