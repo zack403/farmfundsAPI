@@ -6,8 +6,6 @@ const winston = require('winston');
 const config = require('config');
 const {User} = require('./models/users.model');
 const {Investment} = require('./models/investments.model');
-const {ProductPrice} = require('./models/productPrice.model');
-const {Product} = require('./models/products.model');
 const {Purchase} = require('./models/purchases.model');
 const {PurchaseDetail} = require('./models/purchaseDetails.model');
 
@@ -15,6 +13,7 @@ const bodyParser = require('body-parser');
 
 
 const path = require('path');
+const { Subscribers } = require('./models/subscribers.model');
 
 app.use(bodyParser.urlencoded({ extended: false }))
 
@@ -23,12 +22,11 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 
 
 require('./models/users.model');
-require('./models/products.model');
 require('./models/investments.model');
 require('./models/purchases.model');
 require('./models/packages.model');
-require('./models/productPrice.model');
 require('./models/foodMarket.model');
+require('./models/subscribers.model');
 require('./startup/cors')(app);
 require('./startup/config')();
 require('./startup/routes')(app);
@@ -42,10 +40,10 @@ let server;
 //model relationships
 Investment.belongsTo(User, {constraints: true, onDelete: 'CASCADE'});
 Purchase.belongsTo(User, {constraints: true, onDelete: 'CASCADE'});
+Subscribers.belongsTo(User, {constraints: true, onDelete: 'CASCADE'});
 User.hasMany(Investment);
 User.hasMany(Purchase);
-ProductPrice.belongsTo(Product, {constraints: true, onDelete: 'CASCADE'});
-Product.hasMany(ProductPrice);
+User.hasMany(Subscribers);
 PurchaseDetail.belongsTo(Purchase, {constraints: true, onDelete: 'CASCADE'})
 Purchase.hasMany(PurchaseDetail);
 

@@ -13,6 +13,7 @@ const { uuid } = require('uuidv4');
 const Excel = require('exceljs');
 const fs = require("fs");
 const isAdmin = require('../middlewares/admin');
+const { Subscribers } = require('../models/subscribers.model');
 
 
 
@@ -181,7 +182,16 @@ router.put('/markasdelivered/:id', [authorizedMiddleWare, isAdmin], async(req, r
     const item = await Purchase.findOne({where: {id: req.params.id}})
     if(item != null){
         const updated = await item.update({status: "Delivered"});
-        if(updated) return res.status(200).send(successHandler(200, "Successfully marked as delivered"));
+        if(updated)
+        {
+            const sub = await Subscribers.findOne({where: {UserId: item.UserId}});
+            if(sub != null) {
+                let r = (sub.amount * 5) / 100;
+                r = sub.roi - r;
+                await sub.update({roi: r});
+            }
+            return res.status(200).send(successHandler(200, "Successfully marked as delivered"));
+        } 
         return res.status(400).send(errorHandler(400, "Unable to update"));
     }
     return res.status(400).send(errorHandler(404, "Not found"));

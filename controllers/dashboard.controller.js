@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const authorizedMiddleWare = require('../middlewares/auth');
-const {Investment} = require('../models/investments.model');
-const { Purchase } = require('../models/purchases.model');
+const {User} = require('../models/users.model');
+
 
 
 let totalInvAmount = []; 
@@ -12,10 +12,13 @@ let totalInvRoi = [];
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
    
-    const investments = await Investment.findAndCountAll({where: {UserId: req.params.id}});
-    const purchases = await Purchase.findAndCountAll({where: {UserId: req.params.id}});
+    const result = await User.findAndCountAll({where: {id: req.params.id}, include: [{all: true, nested: true}]});
+    
+     let investments = {};
+     const purchases = result.rows[0].Purchases;
+     const subscribers = result.rows[0].Subscribers;
 
-    for(const {amount, roi} of investments.rows){
+    for(const {amount, roi} of result.rows[0].Investments){
         totalInvAmount.push(amount);
         totalInvRoi.push(roi);
     }
@@ -30,12 +33,14 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
         investments.totalRoi = 0;
         investments.totalGain = 0;
     }
+    investments.inv = result.rows[0].Investments;
     
     
     return res.status(200).send({
         status : 200,
         investments,
-        purchases
+        purchases,
+        subscribers
     });
 })
 
