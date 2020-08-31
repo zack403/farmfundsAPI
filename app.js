@@ -50,7 +50,7 @@ Purchase.hasMany(PurchaseDetail);
 
 
 
-sequelize.sync().then(s => {
+sequelize.sync({alter: true}).then(s => {
     app.listen(port, () => winston.info(`Listening on port ${port}...`));
     seed();
 }).catch(e => {
