@@ -2,9 +2,6 @@ const express = require('express');
 const router = express.Router();
 const authorizedMiddleWare = require('../middlewares/auth');
 const {User} = require('../models/users.model');
-const { Subscribers } = require('../models/subscribers.model');
-const { Investment } = require('../models/investments.model');
-const { Purchase } = require('../models/purchases.model');
 
 
 
@@ -16,13 +13,13 @@ let totalInvRoi = [];
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
    
-    const result = await User.findAndCountAll({where: {id: req.params.id}, include: [{all: true, nested: true}], order: [['createdAt', 'DESC']]});
+    const result = await User.findOne({where: {id: req.params.id}, include: [{all: true, nested: true, separate: true, order: [['createdAt', 'DESC']]}]});
     
      let investments = {};
      let subscribers = {};
-     const purchases = result.rows[0].Purchases;
+     const purchases = result.Purchases;
 
-    for(const {amount, roi} of result.rows[0].Investments){
+    for(const {amount, roi} of result.Investments) {
         totalInvAmount.push(amount);
         totalInvRoi.push(roi);
     }
@@ -37,18 +34,18 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
         investments.totalRoi = 0;
         investments.totalGain = 0;
     }
-    investments.inv = result.rows[0].Investments;
-    if(result.rows[0].Subscribers.length > 0) {
-        subscribers.amount = result.rows[0].Subscribers[0].amount;
-        subscribers.roi = result.rows[0].Subscribers[0].roi;
-        subscribers.roc = result.rows[0].Subscribers[0].roc;
+    investments.inv = result.Investments;
+    if(result.Subscribers.length > 0) {
+        subscribers.amount = result.Subscribers[0].amount;
+        subscribers.roi = result.Subscribers[0].roi;
+        subscribers.roc = result.Subscribers[0].roc;
     } else {
         subscribers.amount = 0;
         subscribers.roi = 0;
         subscribers.roc = 0;
     }
    
-    subscribers.subs = result.rows[0].Subscribers;
+    subscribers.subs = result.Subscribers;
 
 
     

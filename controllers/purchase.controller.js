@@ -32,7 +32,7 @@ router.get('/', authorizedMiddleWare, async (req, res) => {
                                 ]} : null;
 
     const { limit, offset } = getPagination(page, size);
-    const data = await Purchase.findAndCountAll({ where: condition, limit, offset, include: PurchaseDetail, distinct: true});
+    const data = await Purchase.findAndCountAll({ where: condition, limit, offset, include: PurchaseDetail, distinct: true, order: [['createdAt', 'DESC']]});
 
     const purchases = getPagingData(data, page, limit);
     return res.status(200).send(purchases);
@@ -184,7 +184,7 @@ router.put('/markasdelivered/:id', [authorizedMiddleWare, isAdmin], async(req, r
         const updated = await item.update({status: "Delivered", deliveredDate: new Date()});
         if(updated)
         {
-            const sub = await Subscribers.findOne({where: {UserId: item.UserId}});
+            const sub = await Subscribers.findOne({where: {UserId: item.UserId}, order: [['createdAt', 'DESC']]});
             if(sub != null) {
                 let r = (sub.amount * 5) / 100;
                 r = sub.roi - r;

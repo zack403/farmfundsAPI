@@ -13,6 +13,8 @@ const isAdmin = require('../middlewares/admin');
 const getPagination = require('../helpers/getPagination');
 const getPagingData = require('../helpers/getPagingData');
 const successHandler = require('../helpers/successHandler');
+const { Op } = require("sequelize");
+
 
 
 
@@ -47,7 +49,7 @@ router.get('/getsubscribers', authorizedMiddleWare, async (req, res) => {
                                 ]} : null;
 
     const { limit, offset } = getPagination(page, size);
-    const data = await Subscribers.findAndCountAll({ where: condition, limit, offset});
+    const data = await Subscribers.findAndCountAll({ where: condition, limit, offset, order: [['createdAt', 'DESC']]});
 
     const subscribers = getPagingData(data, page, limit);
     return res.status(200).send(subscribers);

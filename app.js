@@ -8,6 +8,7 @@ const {User} = require('./models/users.model');
 const {Investment} = require('./models/investments.model');
 const {Purchase} = require('./models/purchases.model');
 const {PurchaseDetail} = require('./models/purchaseDetails.model');
+const {seed} = require('./seed');
 
 const bodyParser = require('body-parser');
 
@@ -49,8 +50,9 @@ Purchase.hasMany(PurchaseDetail);
 
 
 
-sequelize.sync({alter: true}).then(s => {
+sequelize.sync().then(s => {
     app.listen(port, () => winston.info(`Listening on port ${port}...`));
+    seed();
 }).catch(e => {
     console.log(e);
 });

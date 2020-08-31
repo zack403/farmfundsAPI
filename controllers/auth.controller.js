@@ -21,6 +21,7 @@ router.post('/register', async (req, res) => {
 
     req.body.password = hashedPassword;
     req.body.confirmPassword = hashedPassword;
+    req.body.isAdmin = false;
 
     const isCreated = await User.create(req.body);
     if (isCreated) return res.status(201).send({status: 201, message: "Account successfully created"});
