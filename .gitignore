@@ -4,7 +4,5 @@
 /coverage
 /.nyc_output
 logfile.log
-npm-debug.log
-.DS_Store
-/images/*
+/images
 /CustomerOrderExcel/*
