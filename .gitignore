@@ -4,5 +4,9 @@
 /coverage
 /.nyc_output
 logfile.log
-/images/*
-/CustomerOrderExcel/*
+images/**
+!images/**/
+!images/**/.gitkeep
+CustomerOrderExcel/**
+!CustomerOrderExcel/**/
+!CustomerOrderExcel/**/.gitkeep
