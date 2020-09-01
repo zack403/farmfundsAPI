@@ -112,21 +112,17 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     
         for(const item of req.body.purchaseDetails){
             worksheet.getCell(row + 11, 1).value = item.productName;
-            worksheet.getCell(row + 11, 2).value = item.price;
+            worksheet.getCell(row + 11, 2).value = `NGN ${item.price}`;
             worksheet.getCell(row + 11, 3).value = item.unit;
             worksheet.getCell(row + 11, 4).value = item.brand;
             row++;
         }
-    
-        worksheet.getCell(row + 11, 2).numFmt = '$0.00';
-    
+        
     
         worksheet.getCell(row + 12, 1).value = "Total";
         worksheet.getCell(row + 12, 1).font = {bold: true};
-        worksheet.getCell(row + 12, 2).value = req.body.cartTotal;
-    
-        worksheet.getCell(row + 12, 2).numFmt = '$0.00';
-    
+        worksheet.getCell(row + 12, 2).value = `NGN ${req.body.cartTotal}`;
+        
         
     
     

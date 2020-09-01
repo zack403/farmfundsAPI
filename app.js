@@ -9,12 +9,14 @@ const {Investment} = require('./models/investments.model');
 const {Purchase} = require('./models/purchases.model');
 const {PurchaseDetail} = require('./models/purchaseDetails.model');
 const {seed} = require('./seed');
-
 const bodyParser = require('body-parser');
-
-
 const path = require('path');
 const { Subscribers } = require('./models/subscribers.model');
+const morgan = require('morgan');
+
+
+app.use(morgan('combined', { stream: winston.stream }));
+
 
 app.use(bodyParser.urlencoded({ extended: false }))
 
