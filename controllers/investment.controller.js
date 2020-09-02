@@ -66,13 +66,13 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     }
 
     const mailContent2 = {
-        email: 'aminuzack7@gmail.com',
+        email: 'info@farmfundsafrica.com',
         subject: `Investment Notification Email`,
         body: 
             `<p>Hi there,</p>,<br>`
             + `<p>This is to inform you that ${req.user.fullName} Has successfully subscribed to ${req.body.package} package</p><br>`
             + `<p>Login to your admin and see details of the investment.</p><br>`
-            + `<a href="https://farmfunds.netlify.app/admin/login">Login</a><br>`
+            + `<a href="https://farmifyagroadmin.netlify.app/login"> Login </a><br>`
     }
 
     const result = sendMail(mailContent1, mailContent2);

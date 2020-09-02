@@ -112,7 +112,7 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     
         for(const item of req.body.purchaseDetails){
             worksheet.getCell(row + 11, 1).value = item.productName;
-            worksheet.getCell(row + 11, 2).value = `NGN ${item.price}`;
+            worksheet.getCell(row + 11, 2).value = `NGN${item.price}`;
             worksheet.getCell(row + 11, 3).value = item.unit;
             worksheet.getCell(row + 11, 4).value = item.brand;
             row++;
@@ -121,7 +121,7 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     
         worksheet.getCell(row + 12, 1).value = "Total";
         worksheet.getCell(row + 12, 1).font = {bold: true};
-        worksheet.getCell(row + 12, 2).value = `NGN ${req.body.cartTotal}`;
+        worksheet.getCell(row + 12, 2).value = `NGN${req.body.cartTotal}`;
         
         
     
@@ -150,7 +150,7 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
         }
     
         const mailContent2 = {
-            email: 'aminuzack7@gmail.com',
+            email: 'info@farmfundsafrica.com',
             subject: `Purchase Order Notification Email`,
             body: 
                 `<p> Hi there, </p>

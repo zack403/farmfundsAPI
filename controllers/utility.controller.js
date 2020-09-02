@@ -133,7 +133,7 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
     
                 //send email about the proof of payment
             const mailContent =  {
-                to: 'aminuzack7@gmail.com',
+                to: 'info@farmfundsafrica.com',
                 from: 'info@farmfundsafrica.com',
                 subject: `Farmify Market Proof of payment from ${req.body.name}`,
                 html: `<p> Hi there, </p>
