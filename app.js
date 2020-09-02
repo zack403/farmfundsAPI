@@ -15,7 +15,10 @@ const { Subscribers } = require('./models/subscribers.model');
 const morgan = require('morgan');
 
 
-app.use(morgan('combined', { stream: winston.stream }));
+// app.use(morgan('combined', { stream: winston.stream.write }));
+
+app.use(morgan('combined'));
+
 
 
 app.use(bodyParser.urlencoded({ extended: false }))
