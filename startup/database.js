@@ -1,9 +1,6 @@
 const { Sequelize } = require('sequelize');
+const config = require('config');
 
-const sequelize = new Sequelize('postgres://postgres:!Pass4sure@localhost:5432/farmfundsDB');
-// const sequelize = new Sequelize('farmfundsDB', 'postgres', '!Pass4sure', {
-//   host: 'localhost',
-//   dialect: 'postgres'
-// });
+const sequelize = new Sequelize(config.get('db'));
 
 module.exports = sequelize;
