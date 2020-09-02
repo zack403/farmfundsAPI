@@ -47,9 +47,6 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
    
     subscribers.subs = result.Subscribers;
 
-
-    
-    
     return res.status(200).send({
         status : 200,
         investments,
