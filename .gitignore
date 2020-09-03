@@ -5,3 +5,7 @@
 logfile.log
 images/*
 CustomerOrderExcel/*
+!images/.gitkeep 
+!CustomerOrderExcel/.gitkeep 
+
+
