@@ -13,6 +13,8 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const { Subscribers } = require('./models/subscribers.model');
 const morgan = require('morgan');
+require("./config/cloudinaryConfig");
+
 
 
 // app.use(morgan('combined', { stream: winston.stream.write }));
@@ -52,10 +54,11 @@ User.hasMany(Purchase);
 User.hasMany(Subscribers);
 PurchaseDetail.belongsTo(Purchase, {constraints: true, onDelete: 'CASCADE'})
 Purchase.hasMany(PurchaseDetail);
+Subscribers.hasOne(Purchase);
+Purchase.belongsTo(Subscribers);
 
 
-
-sequelize.sync().then(s => {
+sequelize.sync({alter: true}).then(s => {
     app.listen(port, () => winston.info(`Listening on port ${port}...`));
     seed();
 }).catch(e => {

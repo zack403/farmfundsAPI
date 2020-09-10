@@ -5,6 +5,9 @@ const errorHandler = require('../helpers/errorHandler');
 const {User, IsValid} = require('../models/users.model');
 const Joi = require('@hapi/joi');
 const generateAuthToken = require('../helpers/generateAuthToken');
+const config = require('config');
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(config.get('sendgrid_key'));
 
 
 
@@ -24,7 +27,30 @@ router.post('/register', async (req, res) => {
     req.body.isAdmin = false;
 
     const isCreated = await User.create(req.body);
-    if (isCreated) return res.status(201).send({status: 201, message: "Account successfully created"});
+    if (isCreated) {
+      const msg = {
+        to: req.body.email,
+        from: 'info@farmfundsafrica.com',
+        subject: `Welcome to farmfunds africa`,
+        html: `<p> Welcome to farmfunds africa, </p>
+            <p> Where you can eat your cake and have it back. </p>
+            <p>
+            <a href="https://farmfunds.netlify.app/login" style="text-decoration:none;
+                width: 200px; padding: 15px; box-shadow: 6px 6px 5px; 
+                font-weight: MEDIUM; background: green; color: white; 
+                cursor: pointer; margin-top:20px; border: 1px solid #D9D9D9; 
+                font-size: 110%;">GET STARTED</a>
+            </p>`
+
+    }
+    try {
+        await sgMail.send(msg);
+    } catch (error) {
+        console.log(error);
+        return await sgMail.send(mailContent);
+    }
+      return res.status(201).send({status: 201, message: "Account successfully created"});
+    }
 
   });
 
@@ -48,6 +74,10 @@ router.post('/register', async (req, res) => {
         data : isValid.dataValues,
         token: token
       });
+  });
+
+  router.post('/reset-password', async (req, res) => {
+
   });
 
   const isLoginDataValid = req => {

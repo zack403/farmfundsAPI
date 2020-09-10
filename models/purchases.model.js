@@ -46,8 +46,22 @@ const Purchase = sequelize.define('Purchase', {
     deliveredDate: {
         type: DataTypes.DATE,
         allowNull: true,
+    },
+    amount: {
+        type: DataTypes.DOUBLE,
+        allowNull: false,
     }
-})
+},
+{
+    indexes: [
+        {
+            unique: false,
+            fields: ['id', 'name', 'email', 'status']
+        }
+    ]
+}
+
+)
 
 const validatePurchase = pur => {
     const schema =  Joi.object({

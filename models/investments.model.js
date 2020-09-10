@@ -47,7 +47,16 @@ const Investment = sequelize.define('Investment', {
         allowNull: false,
         defaultValue: "Pending"
     }
-})
+},
+{
+    indexes: [
+        {
+            unique: false,
+            fields: ['id', 'investor', 'status']
+        }
+    ]
+}
+)
 
 const validateInvestment = inv => {
     const schema =  Joi.object({

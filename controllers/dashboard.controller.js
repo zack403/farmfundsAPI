@@ -2,6 +2,14 @@ const express = require('express');
 const router = express.Router();
 const authorizedMiddleWare = require('../middlewares/auth');
 const {User} = require('../models/users.model');
+const { Op } = require("sequelize");
+const {Investment} = require('../models//investments.model');
+const {Purchase} = require('../models/purchases.model');
+const {PurchaseDetail} = require('../models/purchaseDetails.model');
+const {Subscribers} = require('../models/subscribers.model');
+
+
+
 
 
 
@@ -13,8 +21,39 @@ let totalInvRoi = [];
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
    
-    const result = await User.findOne({where: {id: req.params.id}, include: [{all: true, nested: true, separate: true, order: [['createdAt', 'DESC']]}]});
+    // const result = await User.findOne({where: {id: req.params.id}, include: [{all: true, where:{amount:{[Op.gt]: 0}}, nested: true, order: [['createdAt', 'DESC']]}]});
     
+    const result = await User.findOne({where: {id: req.params.id}, order: [['createdAt', 'DESC']],
+        include: [
+            {
+                model: Investment, 
+                where: {amount: {[Op.gt]: 0}},
+                required: false
+            },
+            {
+                model: Purchase, 
+                where: {amount: {[Op.gt]: 0}},
+                required: false,
+                include: [
+                    {
+                        all: true
+                    }
+                ]
+            },
+            {
+                model: Subscribers,
+                required: false,
+                where: {amount: {[Op.gt]: 0}},
+                include: [
+                    {all: true}
+                ]
+            }
+        ]
+    });
+
+
+    
+
      let investments = {};
      let subscribers = {};
      const purchases = result.Purchases;

@@ -55,6 +55,7 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
     req.body.id = uuid();
+    req.body.total = req.body.cartTotal;
 
     try {
         for (const details of req.body.purchaseDetails) {
@@ -172,10 +173,10 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     
 });
 
-router.put('/markasdelivered/:id', [authorizedMiddleWare, isAdmin], async(req, res) => {
+router.put('/markasdelivered/:id/:subid/', [authorizedMiddleWare, isAdmin], async(req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
-    const item = await Purchase.findOne({where: {id: req.params.id}})
+    const item = await Purchase.findOne({where: {SubscriberId: req.params.subid}})
     if(item != null){
         const updated = await item.update({status: "Delivered", deliveredDate: new Date()});
         if(updated)

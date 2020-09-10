@@ -53,7 +53,32 @@ const User = sequelize.define('User', {
         allowNull: false,
         defaultValue: false
     }
-})
+},
+{
+    indexes: [
+        {
+            unique: false,
+            fields: [{
+                name: 'id',
+                order: 'DESC'
+            },
+            {
+                name: 'email',
+                order: 'DESC'
+            },
+            {
+                name: 'firstName',
+                order: 'DESC'
+            },
+            {
+                name: 'lastName',
+                order: 'DESC'
+            }
+         ]
+        }
+    ]
+}
+)
 
 const validateUser = user => {
     const schema =  Joi.object({

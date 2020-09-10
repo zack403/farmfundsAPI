@@ -132,7 +132,8 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
             const attachment = fs.readFileSync(pathToAttachment).toString("base64");
     
                 //send email about the proof of payment
-            const mailContent =  {
+        const messages = [
+             {
                 to: 'info@farmfundsafrica.com',
                 from: 'info@farmfundsafrica.com',
                 subject: `Farmify Market Proof of payment from ${req.body.name}`,
@@ -140,18 +141,29 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
                     <p> ${req.body.name} uploaded a proof of payment for their subscription. </p>
                     <p> Attached is the proof of payment. </p>`,
                 attachments: [
-                    {
-                        content: attachment,
-                        filename: fileName,
-                        type: 'image/jpg',
-                        disposition: 'attachment',
-                        contentId: fileName
-                    },
-                ],
-            }
+                        {
+                            content: attachment,
+                            filename: fileName,
+                            type: 'image/jpg',
+                            disposition: 'attachment',
+                            contentId: fileName
+                        },
+                    ],
+                },
+                {
+                    to: req.body.email,
+                    from: 'info@farmfundsafrica.com',
+                    subject: `Proof of payment recieved`,
+                    html: `<p> Hi ${req.body.name}, </p>
+                        <p> We recieve your proof of payment. </p>
+                        <p> You will be notified when your subscription has been confirmed and activated. </p>`
+                        `<b>Thank you for choosing Farm Funds Africa. </b>`
+
+                }
+            ]
     
             try {
-                await sgMail.send(mailContent);
+                await sgMail.send(messages);
             } catch (error) {
                 console.log(error);
                 return await sgMail.send(mailContent);

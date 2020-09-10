@@ -23,6 +23,14 @@ const FoodMarket = sequelize.define('FoodMarket', {
         type: DataTypes.STRING,
         allowNull: false 
     }
+},
+{
+    indexes: [
+        {
+            unique: false,
+            fields: ['id', 'productName']
+        }
+    ]
 })
 
 const validateFoodMarket = product => {

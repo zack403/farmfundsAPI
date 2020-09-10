@@ -38,7 +38,16 @@ const Package = sequelize.define('Package', {
         type: DataTypes.STRING,
         allowNull: false,
     }
-})
+},
+{
+    indexes: [
+        {
+            unique: false,
+            fields: ['id', 'packageName', 'status', 'location']
+        }
+    ]
+}
+)
 
 const validatePackage = pack => {
     const schema =  Joi.object({

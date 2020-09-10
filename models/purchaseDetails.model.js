@@ -29,7 +29,16 @@ const PurchaseDetail = sequelize.define('PurchaseDetail', {
         type: DataTypes.STRING,
         allowNull: true,
     }
-})
+},
+{
+    indexes: [
+        {
+            unique: false,
+            fields: ['id', 'productName']
+        }
+    ]
+}
+)
 
 
 module.exports.PurchaseDetail = PurchaseDetail;

@@ -59,7 +59,17 @@ const Subscribers = sequelize.define('Subscribers', {
         type: DataTypes.INTEGER,
         allowNull: false,
     }
-})
+},
+{
+    indexes: [
+        {
+            unique: false,
+            fields: ['id', 'UserId', 'name', 'email', 'status']
+        }
+    ]
+}
+
+)
 
 const validateSubscribers = sub => {
     const schema =  Joi.object({
