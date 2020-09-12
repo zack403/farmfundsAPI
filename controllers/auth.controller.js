@@ -9,6 +9,8 @@ const generateAuthToken = require('../helpers/generateAuthToken');
 const config = require('config');
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(config.get('sendgrid_key'));
+const { Op } = require("sequelize");
+
 
 
 
@@ -98,6 +100,12 @@ router.post('/register', async (req, res) => {
     if(created) {
       res.status(200).send({message: 'Reset Password successful.'});
 
+      await PasswordResetToken.destroy({where: {[Op.and]: [
+        {UserId: user.id},
+        {resetToken: {[Op.ne]: token}}
+       ]
+      }});
+
       let mailOptions = {
         to: user.dataValues.email,
         from: 'info@farmfundsafrica.com',
@@ -114,8 +122,9 @@ router.post('/register', async (req, res) => {
             console.log(error);
             return await sgMail.send(mailOptions);
         }
+    } else {
+      return res.status(500).send(errorHandler(500, 'failed')); 
     }
-
 
 
   });
