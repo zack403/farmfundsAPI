@@ -35,6 +35,7 @@ require('./models/purchases.model');
 require('./models/packages.model');
 require('./models/foodMarket.model');
 require('./models/subscribers.model');
+require('./models/passwordResetToken.model');
 require('./startup/cors')(app);
 require('./startup/config')();
 require('./startup/routes')(app);

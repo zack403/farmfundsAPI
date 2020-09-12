@@ -1,6 +1,7 @@
 const {User} = require('./models/users.model');
 const { uuid } = require('uuidv4');
 const bcrypt = require('bcrypt');
+const config = require('config');
 
 
 
@@ -10,10 +11,10 @@ const user = {
     lastName: 'Administrator',
     bankName: 'FarmFundsAfricaBank',
     acctNo: '176278287822898',
-    email: 'info@farmfundsafrica.com',
+    email: config.get('adminEmail'),
     phoneNo: '+234-906-238-9766',
-    password: '!pass4sure',
-    confirmPassword: '!pass4sure',
+    password: config.get('adminPassword'),
+    confirmPassword: config.get('adminPassword'),
     isAdmin: true,
 }
 

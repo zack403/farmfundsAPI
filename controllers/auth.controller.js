@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const errorHandler = require('../helpers/errorHandler');
 const {User, IsValid} = require('../models/users.model');
+const {PasswordResetToken} = require('../models/passwordResetToken.model');
 const Joi = require('@hapi/joi');
 const generateAuthToken = require('../helpers/generateAuthToken');
 const config = require('config');
@@ -47,7 +48,7 @@ router.post('/register', async (req, res) => {
         await sgMail.send(msg);
     } catch (error) {
         console.log(error);
-        return await sgMail.send(mailContent);
+        return await sgMail.send(msg);
     }
       return res.status(201).send({status: 201, message: "Account successfully created"});
     }
@@ -76,7 +77,98 @@ router.post('/register', async (req, res) => {
       });
   });
 
-  router.post('/reset-password', async (req, res) => {
+  router.post('/req-reset-password', async (req, res) => {
+    if (!req.body.email) {
+      return res.status(400).send(errorHandler(400, 'Email is required' ));
+    }
+
+    const user =  await User.findOne({where: {email: req.body.email}});
+    if (!user) {
+      return res.status(400).send(errorHandler(400, 'Email does not exist' ));
+    }
+
+    const token = generateAuthToken(user.dataValues); // assing a token to the user here
+
+    const request = {
+      UserId: user.dataValues.id,
+      resetToken: token
+    }
+
+    const created = await PasswordResetToken.create(request);
+    if(created) {
+      res.status(200).send({message: 'Reset Password successful.'});
+
+      let mailOptions = {
+        to: user.dataValues.email,
+        from: 'info@farmfundsafrica.com',
+        subject: 'Farmfunds Africa Account Password Reset',
+        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+        'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+        'http://localhost:4200/response-reset-password/' + token + '\n\n' +
+        'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+        }
+     
+        try {
+            await sgMail.send(mailOptions);
+        } catch (error) {
+            console.log(error);
+            return await sgMail.send(mailOptions);
+        }
+    }
+
+
+
+  });
+
+  router.post('/new-password', async (req, res) => {
+
+    const userToken = await PasswordResetToken.findOne({where: {resetToken: req.body.resettoken}});
+
+    if (!userToken) {
+      return res.status(400).send(errorHandler(400, 'Token has expired'));
+    }
+     
+    const userEmail = await User.findOne({where: {id: userToken.UserId}});
+    if(!userEmail){
+      return res.status(400).send(errorHandler(400, 'User does not exist'));
+    }
+
+    const isPreviousPassword = await bcrypt.compare(req.body.newPassword, userEmail.dataValues.password);
+    if(isPreviousPassword) {
+      return res.status(400).send(errorHandler(400, 'New password cannot be one of previous password.'));
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.newPassword, salt);
+
+    userEmail.dataValues.password = hashedPassword;
+    userEmail.dataValues.confirmPassword = hashedPassword;
+
+    const updated = await User.update(userEmail.dataValues, {where: {id: userEmail.id}});
+    if(updated) {
+      return res.status(200).send({ message: 'Password reset successful. Kindly login to your account' });
+    }
+    return res.status(500).send(errorHandler(500, 'Password reset failed'));
+
+  });
+
+  router.post('/valid-password-token', async (req, res) => {
+    if (!req.body.resettoken) {
+      return res.status(400).send(errorHandler(400, 'Token is required'));
+    }
+
+    const user = await PasswordResetToken.findOne({where: {resetToken: req.body.resettoken}});
+    if (!user) {
+      return res.status(400).send(errorHandler(400, 'Invalid URL'));
+    }
+
+    const updated = await User.update(user, { where: {id: user.UserId }});
+
+    if(updated) {
+      return res.status(200).send({ message: 'Token verified successfully.' });
+    } else {
+      return res.status(500).send(errorHandler(500, err.message));
+    } 
 
   });
 
