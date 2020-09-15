@@ -8,8 +8,11 @@ const getPagination = require('../helpers/getPagination');
 const getPagingData = require('../helpers/getPagingData');
 const { Op } = require("sequelize");
 const upload = require('../middlewares/upload');
-const fs = require('fs');
 const isAdmin = require('../middlewares/admin');
+const imageUpload = require('../helpers/imageUpload');
+const deleteImage = require('../helpers/deleteImage');
+
+
 
 
 
@@ -44,39 +47,71 @@ router.post('/', [authorizedMiddleWare, isAdmin, upload.single('image')], async(
 
     const {error} = IsValid(req.body);
     if (error) return res.status(400).send(errorHandler(400, error.message));
-
+    
     const productExist = await FoodMarket.findOne({where: {productName: { [Op.iLike]: req.body.productName}}});
     if(productExist){
-        fs.unlinkSync(`./${req.file.path}`); // deletes the uploaded product image
+        //fs.unlinkSync(`./${req.file.path}`); // deletes the uploaded product image
         return res.status(400).send(errorHandler(400, `Product Name ${req.body.productName} already exist`));
     } 
 
-    const imageUrl = req.file.path;
-    req.body.imageUrl = imageUrl;
+    if (!req.body.price) {
+        req.body.price = null;
+    }
+
+    const result = await imageUpload(req.file.path);
+
+    if(result) {
+        req.body.imageUrl = result.secure_url;
+    }
+    else {
+        return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
+    }
+
 
     const isFoodMarketCreated = await FoodMarket.create(req.body);
     if(isFoodMarketCreated) return res.status(201).send({status: 201, message: "Product successfully created"});
-    fs.unlinkSync(`./${req.body.imageUrl}`);
+
+    await deleteImage(req.body.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
 
 });
 
 router.patch('/:id', [authorizedMiddleWare, isAdmin, upload.single('image')], async(req, res) => {
-    let item;
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
+    let item = await FoodMarket.findByPk(req.params.id);
+    if(item && item.dataValues.productName != req.body.productName) {
+        const productExist = await FoodMarket.findOne({where: {productName: { [Op.iLike]: req.body.productName}}});
+        if(productExist){
+            //fs.unlinkSync(`./${req.file.path}`); // deletes the uploaded product image
+            return res.status(400).send(errorHandler(400, `Product Name ${req.body.productName} already in use`));
+        } 
+    }
+
     if(req.file) {
-        req.body.imageUrl = req.file.path;
-        item = await FoodMarket.findByPk(req.params.id);
+        const result = await imageUpload(req.file.path);
+
+        if(result) {
+            req.body.imageUrl = result.secure_url;
+        }
+        else {
+            return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
+        }
     }
 
     const updated = await FoodMarket.update(req.body, {where: { id: req.params.id }});
+
     if(updated == 1) {
-        if(item && item.dataValues){
-            fs.unlinkSync(`./${item.dataValues.imageUrl}`);
+
+        if(req.file && (item && item.dataValues)){
+            //fs.unlinkSync(`./${item.dataValues.imageUrl}`);
+            //delete the previous image from cloud
+           await deleteImage(item.dataValues.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
         }
         return res.status(200).send(successHandler(200, "Product successfully updated"));
     }
 
+    await deleteImage(req.body.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
+    
     return res.status(400).send(errorHandler(400, "Unable to update"));
 
 })
@@ -87,9 +122,13 @@ router.delete('/:id', [authorizedMiddleWare, isAdmin], async({params: { id: Food
     const item = await FoodMarket.findByPk(FoodMarketId);
    
     const deleted = await FoodMarket.destroy({where: {id: FoodMarketId}});
+
     if(deleted == 1){
+
         if(item && item.dataValues){
-            fs.unlinkSync(`./${item.dataValues.imageUrl}`);
+            //fs.unlinkSync(`./${item.dataValues.imageUrl}`);
+            await deleteImage(item.dataValues.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
+
         }
         return res.status(200).send(successHandler(200, "Product successfully deleted"));
     } 
