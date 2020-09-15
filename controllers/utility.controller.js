@@ -14,6 +14,8 @@ const getPagination = require('../helpers/getPagination');
 const getPagingData = require('../helpers/getPagingData');
 const successHandler = require('../helpers/successHandler');
 const { Op } = require("sequelize");
+const imageUpload = require('../helpers/imageUpload');
+const deleteImage = require('../helpers/deleteImage');
 
 
 
@@ -79,7 +81,8 @@ router.put('/activatesubscriber/:id', [authorizedMiddleWare, isAdmin], async(req
                     return await sgMail.send(mailContent);
                 }
             
-            fs.unlinkSync(`./${item.proofOfPayment}`);
+            await deleteImage(item.proofOfPayment.match(/([^\/]+)(?=\.\w+$)/)[0]);
+            //fs.unlinkSync(`./${item.proofOfPayment}`);
             return res.status(200).send(successHandler(200, "Successfully activated"));
             
         }
@@ -111,7 +114,14 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
 
     if(req.body.paymentType === 'Transfer') {
         if (!req.file) return res.status(400).send(errorHandler(400, 'Proof of payment is required'));
-        req.body.proofOfPayment = req.file.path;
+        const result = await imageUpload(req.file.path);
+
+        if(result) {
+            req.body.proofOfPayment  = result.secure_url;
+        }
+        else {
+            return res.status(500).send(errorHandler(500, "Error while trying to upload your proof, try again..."));
+        }
     }
 
     if(req.body.paymentType === 'Card') {
@@ -127,9 +137,9 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
     const created = await Subscribers.create(req.body);
     if(created) {
         if(req.body.paymentType === 'Transfer') {
-            const pathToAttachment = req.file.path;
+            const pathToAttachment = req.body.proofOfPayment;
             const fileName = `${req.body.name}_proofofpayment.jpg`;
-            const attachment = fs.readFileSync(pathToAttachment).toString("base64");
+            const attachment = pathToAttachment.toString("base64");
     
                 //send email about the proof of payment
         const messages = [
@@ -171,7 +181,9 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
         }
         return res.status(200).send({status: 200, message: "Your file has been uploaded successfully, please hold on while we confirm and activate your subscription. Thanks"});
     } 
-    fs.unlinkSync(`./${req.body.proofOfPayment}`);
+
+    await deleteImage(req.body.proofOfPayment.match(/([^\/]+)(?=\.\w+$)/)[0]);
+
 
 });
 
