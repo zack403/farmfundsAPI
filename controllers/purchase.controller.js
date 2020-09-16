@@ -55,7 +55,7 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
     req.body.id = uuid();
-    req.body.total = req.body.cartTotal;
+    req.body.amount = req.body.cartTotal;
 
     try {
         for (const details of req.body.purchaseDetails) {

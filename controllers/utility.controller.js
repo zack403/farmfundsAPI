@@ -144,10 +144,10 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
         if(req.body.paymentType === 'Transfer') {
             // const pathToAttachment = req.body.proofOfPayment;
             const fileName = `${req.body.name}_proofofpayment.jpg`;
+            const attachment = fs.readFileSync(req.file.path, {encoding: 'base64'});
             // const attachment = pathToAttachment.toString("base64");
     
-            let base = await toBase64(file);
-            const attachment = base.split(',')[1];
+            
 
                 //send email about the proof of payment
         const messages = [
@@ -167,27 +167,26 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
                             contentId: fileName
                         },
                     ],
-                },
-                {
-                    to: req.body.email,
-                    from: 'info@farmfundsafrica.com',
-                    subject: `Proof of payment recieved`,
-                    html: `<p> Hi ${req.body.name}, </p>
-                        <p> We recieve your proof of payment. </p>
-                        <p> You will be notified when your subscription has been confirmed and activated. </p>`
-                        `<b> Thank you for choosing Farm Funds Africa. </b>`
-
                 }
+                // {
+                //     to: req.body.email,
+                //     from: 'info@farmfundsafrica.com',
+                //     subject: `Proof of payment recieved`,
+                //     html: `<p> Hi ${req.body.name}, </p>
+                //         <p> We recieve your proof of payment. </p>
+                //         <p> You will be notified when your subscription has been confirmed and activated. </p>`
+                //         `<b> Thank you for choosing Farm Funds Africa. </b>`
+
+                // }
             ]
     
             try {
                 await sgMail.send(messages);
             } catch (error) {
-                console.log(error);
-                return await sgMail.send(messages);
+                await sgMail.send(messages);
             }
         }
-        return res.status(200).send({status: 200, message: "Your file has been uploaded successfully, please hold on while we confirm and activate your subscription. Thanks"});
+        return res.status(200).send({status: 200, message: created.dataValues.id});
     } 
 
     await deleteImage(req.body.proofOfPayment.match(/([^\/]+)(?=\.\w+$)/)[0]);
@@ -206,11 +205,6 @@ const ValidateContactUs = req => {
   return schema.validate(req);
 }
 
-const toBase64 = file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => resolve(reader.result);
-    reader.onerror = error => reject(error);
-});
+
 
 module.exports = router;
