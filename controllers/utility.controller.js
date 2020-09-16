@@ -113,7 +113,7 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
     if(req.body.paymentType === 'Transfer') {
-        
+
         if (!req.file) return res.status(400).send(errorHandler(400, 'Proof of payment is required'));
         try {
             const result = await imageUpload(req.file.path);
@@ -142,14 +142,17 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
     const created = await Subscribers.create(req.body);
     if(created) {
         if(req.body.paymentType === 'Transfer') {
-            const pathToAttachment = req.body.proofOfPayment;
+            // const pathToAttachment = req.body.proofOfPayment;
             const fileName = `${req.body.name}_proofofpayment.jpg`;
-            const attachment = pathToAttachment.toString("base64");
+            // const attachment = pathToAttachment.toString("base64");
     
+            let base = await toBase64(file);
+            const attachment = base.split(',')[1];
+
                 //send email about the proof of payment
         const messages = [
              {
-                to: 'info@farmfundsafrica.com',
+                to: 'aminuzack7@gmail.com',
                 from: 'info@farmfundsafrica.com',
                 subject: `Farmify Market Proof of payment from ${req.body.name}`,
                 html: `<p> Hi there, </p>
@@ -172,7 +175,7 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
                     html: `<p> Hi ${req.body.name}, </p>
                         <p> We recieve your proof of payment. </p>
                         <p> You will be notified when your subscription has been confirmed and activated. </p>`
-                        `<b>Thank you for choosing Farm Funds Africa. </b>`
+                        `<b> Thank you for choosing Farm Funds Africa. </b>`
 
                 }
             ]
@@ -181,7 +184,7 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
                 await sgMail.send(messages);
             } catch (error) {
                 console.log(error);
-                return await sgMail.send(mailContent);
+                return await sgMail.send(messages);
             }
         }
         return res.status(200).send({status: 200, message: "Your file has been uploaded successfully, please hold on while we confirm and activate your subscription. Thanks"});
@@ -202,5 +205,12 @@ const ValidateContactUs = req => {
   })
   return schema.validate(req);
 }
+
+const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => resolve(reader.result);
+    reader.onerror = error => reject(error);
+});
 
 module.exports = router;
