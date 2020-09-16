@@ -58,15 +58,18 @@ router.post('/', [authorizedMiddleWare, isAdmin, upload.single('image')], async(
         req.body.price = null;
     }
 
-    const result = await imageUpload(req.file.path);
-
-    if(result) {
-        req.body.imageUrl = result.secure_url;
+    try {
+        const result = await imageUpload(req.file.path);
+        if(result) {
+            req.body.imageUrl = result.secure_url;
+        }
+        else {
+            return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
+        }
+        
+    } catch (error) {
+        return res.status(500).send(errorHandler(500, `Internal Server Error - ${error.message}`));
     }
-    else {
-        return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
-    }
-
 
     const isFoodMarketCreated = await FoodMarket.create(req.body);
     if(isFoodMarketCreated) return res.status(201).send({status: 201, message: "Product successfully created"});
@@ -88,13 +91,17 @@ router.patch('/:id', [authorizedMiddleWare, isAdmin, upload.single('image')], as
     }
 
     if(req.file) {
-        const result = await imageUpload(req.file.path);
-
-        if(result) {
-            req.body.imageUrl = result.secure_url;
-        }
-        else {
-            return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
+        try {
+            const result = await imageUpload(req.file.path);
+            if(result) {
+                req.body.imageUrl = result.secure_url;
+            }
+            else {
+                return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
+            }
+            
+        } catch (error) {
+            return res.status(500).send(errorHandler(500, `Internal Server Error - ${error.message}`));
         }
     }
 

@@ -113,14 +113,19 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
     if(req.body.paymentType === 'Transfer') {
+        
         if (!req.file) return res.status(400).send(errorHandler(400, 'Proof of payment is required'));
-        const result = await imageUpload(req.file.path);
-
-        if(result) {
-            req.body.proofOfPayment  = result.secure_url;
-        }
-        else {
-            return res.status(500).send(errorHandler(500, "Error while trying to upload your proof, try again..."));
+        try {
+            const result = await imageUpload(req.file.path);
+            if(result) {
+                req.body.proofOfPayment  = result.secure_url;
+            }
+            else {
+                return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
+            }
+            
+        } catch (error) {
+            return res.status(500).send(errorHandler(500, `Internal Server Error - ${error.message}`));
         }
     }
 
