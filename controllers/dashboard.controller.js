@@ -21,31 +21,39 @@ let totalInvRoi = [];
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
    
-    // const result = await User.findOne({where: {id: req.params.id}, include: [{all: true, where:{amount:{[Op.gt]: 0}}, nested: true, order: [['createdAt', 'DESC']]}]});
+    // const result = await User.findOne({where: {id: req.params.id}, include: [{all: true,  nested: true, order: [['createdAt', 'DESC']]}]});
     
     const result = await User.findOne({where: {id: req.params.id}, order: [['createdAt', 'DESC']],
         include: [
             {
                 model: Investment, 
+                separate: true,
+                order: [['createdAt', 'DESC']],
                 where: {amount: {[Op.gt]: 0}},
                 required: false
             },
             {
                 model: Purchase, 
+                separate: true,
+                order: [['createdAt', 'DESC']],
                 where: {amount: {[Op.gt]: 0}},
                 required: false,
                 include: [
                     {
-                        all: true
+                        all: true,
+                        order: [['createdAt', 'DESC']],
+
                     }
                 ]
             },
             {
                 model: Subscribers,
+                separate: true,
+                order: [['createdAt', 'DESC']],
                 required: false,
                 where: {amount: {[Op.gt]: 0}},
                 include: [
-                    {all: true}
+                    {all: true, order: [['createdAt', 'DESC']] }
                 ]
             }
         ]
