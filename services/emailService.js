@@ -8,12 +8,6 @@ sgMail.setApiKey(config.get('sendgrid_key'));
 module.exports = async function({mailContent1, mailContent2, attachment, fileName})  {
     const messages = [
         {
-            to: mailContent1.email,
-            from: 'info@farmfundsafrica.com',
-            subject: mailContent1.subject,
-            html: mailContent1.body
-        },
-        {
             to: mailContent2.email,
             from: 'info@farmfundsafrica.com',
             subject: mailContent2.subject,
@@ -27,12 +21,19 @@ module.exports = async function({mailContent1, mailContent2, attachment, fileNam
                   contentId: fileName
                 },
               ],
+        },
+        {
+            to: mailContent1.email,
+            from: 'info@farmfundsafrica.com',
+            subject: mailContent1.subject,
+            html: mailContent1.body
         }
+   
     ];
     try {
         return await sgMail.send(messages);
     } catch (error) {
         console.log(error);
-        return await sgMail.send(messages);
+        await sgMail.send(messages);
     }
 }

@@ -43,6 +43,14 @@ router.get('/:id', authorizedMiddleWare, async ({params: { id: userId } }, res) 
 
 router.put('/', authorizedMiddleWare, async(req, res) => {
     if(!req.body.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
+    
+    const user = await User.findByPk(req.body.id);
+    if(user && user.dataValues.email != req.body.email) {
+        const userExist = await User.findOne({where: {email: { [Op.iLike]: req.body.email}}});
+        if(userExist){
+            return res.status(400).send(errorHandler(400, `This email ${req.body.email} is already in use`));
+        }
+    }
 
     const updated = await User.update(req.body, {where: { id: req.body.id }});
     if(updated == 1) return res.status(200).send(successHandler(200, "Profile successfully updated"));

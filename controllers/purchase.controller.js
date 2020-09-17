@@ -113,7 +113,7 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     
         for(const item of req.body.purchaseDetails){
             worksheet.getCell(row + 11, 1).value = item.productName;
-            worksheet.getCell(row + 11, 2).value = `NGN${item.price}`;
+            worksheet.getCell(row + 11, 2).value = `NGN ${item.price}`;
             worksheet.getCell(row + 11, 3).value = item.unit;
             worksheet.getCell(row + 11, 4).value = item.brand;
             row++;
@@ -122,7 +122,7 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     
         worksheet.getCell(row + 12, 1).value = "Total";
         worksheet.getCell(row + 12, 1).font = {bold: true};
-        worksheet.getCell(row + 12, 2).value = `NGN${req.body.cartTotal}`;
+        worksheet.getCell(row + 12, 2).value = `NGN ${req.body.cartTotal}`;
         
         
     
@@ -176,12 +176,12 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
 router.put('/markasdelivered/:id/:subid/', [authorizedMiddleWare, isAdmin], async(req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
-    const item = await Purchase.findOne({where: {SubscriberId: req.params.subid}})
+    const item = await Purchase.findByPk(req.params.id)
     if(item != null){
         const updated = await item.update({status: "Delivered", deliveredDate: new Date()});
         if(updated)
         {
-            const sub = await Subscribers.findOne({where: {UserId: item.UserId}, order: [['createdAt', 'DESC']]});
+            const sub = await Subscribers.findByPk(req.params.subid);
             if(sub != null) {
                 let r = (sub.amount * 5) / 100;
                 r = sub.roi - r;

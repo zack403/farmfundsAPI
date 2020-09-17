@@ -77,8 +77,7 @@ router.put('/activatesubscriber/:id', [authorizedMiddleWare, isAdmin], async(req
                 try {
                     await sgMail.send(mailContent);
                 } catch (error) {
-                    console.log(error);
-                    return await sgMail.send(mailContent);
+                    await sgMail.send(mailContent);
                 }
             
             await deleteImage(item.proofOfPayment.match(/([^\/]+)(?=\.\w+$)/)[0]);
@@ -152,7 +151,7 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
                 //send email about the proof of payment
         const messages = [
              {
-                to: 'aminuzack7@gmail.com',
+                to: 'info@farmfundsafrica.com',
                 from: 'info@farmfundsafrica.com',
                 subject: `Farmify Market Proof of payment from ${req.body.name}`,
                 html: `<p> Hi there, </p>
@@ -183,7 +182,7 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
             try {
                 await sgMail.send(messages);
             } catch (error) {
-                await sgMail.send(messages);
+                //await sgMail.send(messages);
             }
         }
         return res.status(200).send({status: 200, message: created.dataValues.id});
