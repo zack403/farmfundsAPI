@@ -14,6 +14,7 @@ const path = require('path');
 const { Subscribers } = require('./models/subscribers.model');
 const morgan = require('morgan');
 require("./config/cloudinaryConfig");
+const sendItemsNotifier = require('./services/sendItemsNotifier');
 
 
 
@@ -62,6 +63,7 @@ Purchase.belongsTo(Subscribers);
 sequelize.sync({alter: true}).then(s => {
     app.listen(port, () => winston.info(`Listening on port ${port}...`));
     seed();
+    sendItemsNotifier();
 }).catch(e => {
     console.log(e);
 });

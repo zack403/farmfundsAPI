@@ -7,5 +7,5 @@ images/*
 CustomerOrderExcel/*
 !images/.gitkeep 
 !CustomerOrderExcel/.gitkeep 
-
+/debug.log
 

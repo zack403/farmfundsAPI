@@ -50,6 +50,11 @@ const Purchase = sequelize.define('Purchase', {
     amount: {
         type: DataTypes.DOUBLE,
         allowNull: false,
+    },
+    emailSent: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false
     }
 },
 {
