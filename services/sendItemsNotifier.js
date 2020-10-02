@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const {Purchase} = require('../models/purchases.model');
 const {Subscribers} = require('../models/subscribers.model');
 const config = require('config');
@@ -7,9 +7,15 @@ const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(config.get('sendgrid_key'));
 
 
-const isDues = [];
-const messages = [];
-const msg = {};
+let isDues = [];
+let messages = [];
+let msg = {};
+
+const formatter = new Intl.NumberFormat('en-NI', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 2
+})
 
 
 module.exports = async function()  { 
@@ -19,6 +25,10 @@ module.exports = async function()  {
         // background services to remind users to send their items once its due
         cron.schedule("*/5 * * * *", async function() {
             
+            isDues = [];
+            messages = [];
+            msg = {};
+
             let today = new Date();
 
             // first get all records in purchase table
@@ -27,9 +37,10 @@ module.exports = async function()  {
             // iterate through the list get all purchases whose last deliveredDate has reach 2 weeks from today
             for (const item of purchases) {
 
-                item.deliveredDate = new Date(item.deliveredDate.setDate(item.deliveredDate.getDate() + 2 * 7));
+                let deliveredDate = new Date(item.deliveredDate);
+                deliveredDate = new Date(deliveredDate.setDate(deliveredDate.getDate() + 2 * 7));
 
-                if(today >= item.deliveredDate) {
+                if(today >= deliveredDate) {
                     isDues.push(item);
                 }
             }
@@ -41,28 +52,28 @@ module.exports = async function()  {
 
                     msg.to = isd.email;
                     msg.from = 'info@farmfundsafrica.com';
-                    msg.subject = `Reminder to send us your items for your ${subAmount.amount} subscription`,
-                    msg.html = `<p> Hi there, </p>
-                        <p> This email is to remind you to send us your items for your ${subAmount.amount} subscription </p>`
+                    msg.subject = `Reminder to send us your items for your <strong>${formatter.format(subAmount.amount)}</strong> subscription`,
+                    msg.html = `<p> Dear ${subAmount.name}, </p>
+                        <p>Due to your busy schedule, this is a reminder email for you to send us your items for your <strong>${formatter.format(subAmount.amount)}</strong> subscription.</p>
+                        <p> Please login to your dashboard and proceed to click on the Add Items button to send us your items for the new month.</p>
+                        <p> Thank you for choosing <strong> Farm Funds Africa. </strong></p>`
 
                     messages.push(msg);
+
                 }
             }
             
             try {
                 if(messages.length > 0) {
-                    await sgMail.send(messages);
-                    for (const e of isDues) {
-                        e.emailSent = true;
+                    const sent = await sgMail.send(messages);
+                    if(sent) {
+                        for (const e of isDues) {
+                            await Purchase.update({emailSent: true}, {where: {id: e.id}})
+                        }
                     }
-
-                    await Purchase.bulkCreate(isDues, {updateOnDuplicate: ["id"]})
                 }
 
-                isDues = [];
-                messages = [];
-                msg = {};
-                
+
             } catch (error) {
                 console.log(`error while sending reminder - ${error}`);
             }
@@ -70,7 +81,7 @@ module.exports = async function()  {
         });
         
     } catch (error) {
-        console.log(`error while running background task - ${error} `)
+        console.log(`error while running background task - ${error} `); 
     }
   
 }

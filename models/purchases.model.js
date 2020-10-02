@@ -61,7 +61,7 @@ const Purchase = sequelize.define('Purchase', {
     indexes: [
         {
             unique: false,
-            fields: ['id', 'name', 'email', 'status']
+            fields: ['id', 'name', 'email', 'status', 'emailSent', 'deliveredDate']
         }
     ]
 }
