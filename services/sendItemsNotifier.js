@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const { Op, where } = require("sequelize");
+const { Op } = require("sequelize");
 const {Purchase} = require('../models/purchases.model');
 const {Subscribers} = require('../models/subscribers.model');
 const config = require('config');
@@ -22,8 +22,8 @@ module.exports = async function()  {
 
     try {
 
-        // background services to remind users to send their items once its due
-        cron.schedule("*/5 * * * *", async function() {
+        // background service to remind users to send their items once its due
+        cron.schedule("0 4 * * *", async function() {
             
             isDues = [];
             messages = [];
@@ -52,9 +52,9 @@ module.exports = async function()  {
 
                     msg.to = isd.email;
                     msg.from = 'info@farmfundsafrica.com';
-                    msg.subject = `Reminder to send us your items for your <strong>${formatter.format(subAmount.amount)}</strong> subscription`,
+                    msg.subject = `Reminder to send us your items for your ${formatter.format(subAmount.amount)} subscription`,
                     msg.html = `<p> Dear ${subAmount.name}, </p>
-                        <p>Due to your busy schedule, this is a reminder email for you to send us your items for your <strong>${formatter.format(subAmount.amount)}</strong> subscription.</p>
+                        <p> Due to your busy schedule, this is a reminder email for you to send us your items for your <strong>${formatter.format(subAmount.amount)}</strong> subscription.</p>
                         <p> Please login to your dashboard and proceed to click on the Add Items button to send us your items for the new month.</p>
                         <p> Thank you for choosing <strong> Farm Funds Africa. </strong></p>`
 
