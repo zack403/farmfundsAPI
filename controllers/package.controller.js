@@ -8,6 +8,8 @@ const getPagination = require('../helpers/getPagination');
 const getPagingData = require('../helpers/getPagingData');
 const { Op } = require("sequelize");
 const upload = require('../middlewares/upload');
+const imageUpload = require('../helpers/imageUpload');
+const deleteImage = require('../helpers/deleteImage');
 
 
 
@@ -41,12 +43,30 @@ router.post('/', [authorizedMiddleWare, upload.single('image')], async(req, res)
     const {error} = IsValid(req.body);
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
-    const imageUrl = req.file.path;
-    req.body.imageUrl = imageUrl;
+    const packageExist = await Package.findOne({where: {packageName: { [Op.iLike]: req.body.packageName}}});
+    if(packageExist){
+        return res.status(400).send(errorHandler(400, `Package Name ${req.body.packageName} already exist`));
+    } 
+
+    try {
+        const result = await imageUpload(req.file.path);
+        if(result) {
+            req.body.imageUrl = result.secure_url;
+        }
+        else {
+            return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
+        }
+        
+    } catch (error) {
+        return res.status(500).send(errorHandler(500, `Internal Server Error - ${error.message}`));
+    }
     
     const isPackageCreated = await Package.create(req.body);
 
     if(isPackageCreated) return res.status(201).send({status: 201, message: "Package successfully created"});
+
+    await deleteImage(req.body.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
+
 
 });
 
@@ -54,13 +74,34 @@ router.put('/:id', [authorizedMiddleWare, upload.single('image')], async(req, re
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
     if(req.file) {
-        req.body.imageUrl = req.file.path;
+        try {
+            const result = await imageUpload(req.file.path);
+            if(result) {
+                req.body.imageUrl = result.secure_url;
+            }
+            else {
+                return res.status(500).send(errorHandler(500, "Error while trying to upload your image, try again..."));
+            }
+            
+        } catch (error) {
+            return res.status(500).send(errorHandler(500, `Internal Server Error - ${error.message}`));
+        }
     }
 
     const updated = await Package.update(req.body, {where: { id: req.params.id }});
-    if(updated == 1) return res.status(200).send(successHandler(200, "Package successfully updated"));
+    if(updated == 1) {
+        let item = await Package.findByPk(req.params.id);
+        if(req.file && (item && item.dataValues)){
+            //delete the previous image from cloud
+           await deleteImage(item.dataValues.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
+        }
+        return res.status(200).send(successHandler(200, "Package successfully updated"));
+    }
 
+    await deleteImage(req.body.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
+    
     return res.status(400).send(errorHandler(400, "Unable to update"));
+
 
 })
 

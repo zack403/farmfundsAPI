@@ -54,6 +54,10 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
     const {error} = IsValid(req.body);
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
+    if(req.body.purchaseDetails.length === 0) {
+        return res.status(400).send(errorHandler(400, 'Invalid request. Missing item details.'));
+    }
+
     req.body.id = uuid();
     req.body.amount = req.body.cartTotal;
 
