@@ -10,6 +10,7 @@ const config = require('config');
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(config.get('sendgrid_key'));
 const { Op } = require("sequelize");
+const authorizedMiddleWare = require('../middlewares/auth');
 
 
 
@@ -180,6 +181,59 @@ router.post('/register', async (req, res) => {
     } 
 
   });
+
+  router.post('/change-password', authorizedMiddleWare, async (req, res) => { 
+
+    if(isEmpty(req.body)) {
+      return res.status(400).send(errorHandler(400, 'Invalid payload'));
+    }
+
+    const {oldPassword, newPassword, confirmNewP} = req.body;
+
+    if(oldPassword && newPassword && confirmNewP) {
+      if(newPassword != confirmNewP) {
+        return res.status(400).send(errorHandler(400, 'Confirm password must match new password.'));
+      }
+  
+      const user = await User.findOne({where: {id: req.user.id}});
+      if(!user){
+        return res.status(400).send(errorHandler(400, 'User does not exist'));
+      }
+  
+      const isOldPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+      if(!isOldPasswordCorrect) {
+        return res.status(400).send(errorHandler(400, 'Old password is not correct.'));
+      }  
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      user.dataValues.password = hashedPassword;
+      user.dataValues.confirmPassword = hashedPassword;
+
+      const updated = await User.update(user.dataValues, {where: {id: user.id}});
+
+      if(updated) {
+        return res.status(200).send({ message: 'Password change successful. Kindly login again.' });
+      }
+      return res.status(500).send(errorHandler(500, 'Password change failed'));
+
+    }
+    else {
+      return res.status(400).send(errorHandler(400, 'Please check your payload.'));
+
+    }
+       
+
+  })
+
+  const isEmpty = (obj) => {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+  }
 
   const isLoginDataValid = req => {
         const schema = Joi.object({
