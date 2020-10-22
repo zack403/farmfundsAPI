@@ -21,6 +21,9 @@ let totalInvRoi = [];
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
    
+    totalInvAmount = [];
+    totalInvRoi = [];
+
     // const result = await User.findOne({where: {id: req.params.id}, include: [{all: true,  nested: true, order: [['createdAt', 'DESC']]}]});
     
     const result = await User.findOne({where: {id: req.params.id}, order: [['createdAt', 'DESC']],

@@ -14,6 +14,10 @@ const Investment = sequelize.define('Investment', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    packageId: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     amount: {
         type: DataTypes.DOUBLE,
         allowNull : false
@@ -21,6 +25,10 @@ const Investment = sequelize.define('Investment', {
     roi: {
         type: DataTypes.DOUBLE,
         allowNull : false
+    },
+    email : {
+        type: DataTypes.STRING,
+        allowNull: false
     },
     investor: {
         type: DataTypes.STRING,
@@ -30,16 +38,20 @@ const Investment = sequelize.define('Investment', {
         type: DataTypes.INTEGER,
         allowNull: false 
     },
-    profit: {
-        type: DataTypes.INTEGER,
-        allowNull: false 
-    },
     startDate: {
         type: DataTypes.DATE,
-        allowNull : false
+        allowNull : true
     },
     endDate: {
         type: DataTypes.DATE,
+        allowNull : true
+    },
+    proofOfPayment: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    paymentType: {
+        type: DataTypes.STRING,
         allowNull : false
     },
     status: {
@@ -61,13 +73,10 @@ const Investment = sequelize.define('Investment', {
 const validateInvestment = inv => {
     const schema =  Joi.object({
       package: Joi.string().required(),
-      amount: Joi.string().required(),
-      cycle: Joi.string().required(),
-      location: Joi.string().required(),
-      startDate: Joi.date().required(),
-      endDate: Joi.date().required(),
+      packageId: Joi.string().required(),
       unit: Joi.number().integer().required(),
-      profit: Joi.number().integer().required()
+      paymentType: Joi.string().required(),
+      investor: Joi.string().required()
     })
     return schema.validate(inv);
   }

@@ -21,7 +21,7 @@ const deleteImage = require('../helpers/deleteImage');
 
 
 //contactus
-router.get('/contactus', async (req, res) => {
+router.post('/contactus', async (req, res) => {
     const {error} = ValidateContactUs(req.body);
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
@@ -37,7 +37,7 @@ router.get('/contactus', async (req, res) => {
         res.status(200).send({status: 200, message: "We got your message, we will get back to you shortly!"});
     }
     else {
-        res.status(500).send({status: 500, message: "Something failed, error while sending your message"});
+        res.status(500).send({status: 500, message: "Something failed, error while sending your message, please try again."});
     }
 })
 
@@ -101,7 +101,10 @@ router.delete('/deletesubscriber/:id', [authorizedMiddleWare, isAdmin], async({p
     }
     else {
         const deleted = await Subscribers.destroy({where: {id: subscriberId}});
-        if(deleted == 1) return res.status(200).send(successHandler(200, "Successfully deleted"));
+        if(deleted == 1) {
+            await deleteImage(item.proofOfPayment.match(/([^\/]+)(?=\.\w+$)/)[0]);
+            return res.status(200).send(successHandler(200, "Successfully deleted"));
+        } 
     
         return res.status(400).send(errorHandler(400, "Unable to delete"));
     }
@@ -198,7 +201,6 @@ const ValidateContactUs = req => {
     const schema = Joi.object({
       name: Joi.string().required(),
       email : Joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
-      subject: Joi.string().optional(),
       message: Joi.string().required()
   })
   return schema.validate(req);

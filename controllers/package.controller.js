@@ -15,7 +15,7 @@ const deleteImage = require('../helpers/deleteImage');
 
 
 //get all
-router.get('/', authorizedMiddleWare, async (req, res) => {
+router.get('/', async (req, res) => {
     const { page, size, search } = req.query;
     const condition = search ? { packageName: { [Op.iLike]: `%${search}%`}} : null;
 
@@ -61,16 +61,16 @@ router.post('/', [authorizedMiddleWare, upload.single('image')], async(req, res)
         return res.status(500).send(errorHandler(500, `Internal Server Error - ${error.message}`));
     }
     
-    const isPackageCreated = await Package.create(req.body);
-
-    if(isPackageCreated) return res.status(201).send({status: 201, message: "Package successfully created"});
-
-    await deleteImage(req.body.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
-
+    try {
+        const isPackageCreated = await Package.create(req.body);
+        if(isPackageCreated) return res.status(201).send({status: 201, message: "Package successfully created"});
+    } catch (error) {
+        await deleteImage(req.body.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);   
+    }
 
 });
 
-router.put('/:id', [authorizedMiddleWare, upload.single('image')], async(req, res) => {
+router.patch('/:id', [authorizedMiddleWare, upload.single('image')], async(req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
     if(req.file) {
@@ -108,12 +108,21 @@ router.put('/:id', [authorizedMiddleWare, upload.single('image')], async(req, re
 router.delete('/:id', authorizedMiddleWare, async({params: { id: PackageId } }, res) => {
     if(!PackageId) return res.status(400).send(errorHandler(400, 'Missing id param'));
 
+    const item = await Package.findByPk(PackageId);
+
     const deleted = await Package.destroy({where: {id: PackageId}});
-    if(deleted == 1) return res.status(200).send(successHandler(200, "Package successfully deleted"));
+    if(deleted == 1) {
+
+        if(item && item.dataValues){
+            //fs.unlinkSync(`./${item.dataValues.imageUrl}`);
+            await deleteImage(item.dataValues.imageUrl.match(/([^\/]+)(?=\.\w+$)/)[0]);
+
+        }
+
+        return res.status(200).send(successHandler(200, "Package successfully deleted"));
+    } 
 
     return res.status(400).send(errorHandler(400, "Unable to delete"));
-
-
 });
 
 module.exports = router;

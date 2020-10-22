@@ -19,11 +19,11 @@ const Package = sequelize.define('Package', {
         allowNull : false
     },
     profit: {
-        type: DataTypes.STRING,
+        type: DataTypes.DOUBLE,
         allowNull : false
     },
     cycle: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false 
     },
     location: {
@@ -34,16 +34,16 @@ const Package = sequelize.define('Package', {
         type: DataTypes.INTEGER,
         allowNull : false
     },
-    status: {
+    imageUrl: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: false 
     }
 },
 {
     indexes: [
         {
             unique: false,
-            fields: ['id', 'packageName', 'status', 'location']
+            fields: ['id', 'packageName', 'location']
         }
     ]
 }
@@ -52,12 +52,11 @@ const Package = sequelize.define('Package', {
 const validatePackage = pack => {
     const schema =  Joi.object({
       packageName: Joi.string().required(),
-      profit: Joi.string().required(),
-      cycle: Joi.string().required(),
+      profit: Joi.number().required(),
+      cycle: Joi.number().required(),
       location: Joi.string().required(),
-      status: Joi.string().required(),
       unit: Joi.number().integer().required(),
-      amountPerUnit: Joi.number().integer().required()
+      amountPerUnit: Joi.string().required()
     })
     return schema.validate(pack);
   }
