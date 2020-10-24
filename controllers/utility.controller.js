@@ -62,7 +62,9 @@ router.put('/activatesubscriber/:id', [authorizedMiddleWare, isAdmin], async(req
 
     const item = await Subscribers.findOne({where: {id: req.params.id}});
     if(item != null){
-        const updated = await item.update({status: "Activated"});
+        const start = new Date().getTime();
+        const end = new Date(start + (364*24*60*60*1000))
+        const updated = await item.update({status: "Activated", startDate: start, endDate: end});
         if(updated) {
                  //send email about the proof of payment
                  const mailContent =  {
@@ -133,13 +135,13 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
 
     if(req.body.paymentType === 'Card') {
         req.body.status = 'Activated';
+        req.body.startDate = new Date().getTime();
+        req.body.endDate = new Date(req.body.startDate + (364*24*60*60*1000));
     }
 
     req.body.amount = req.body.unit * 100000;
     req.body.roc = (req.body.amount * 70) / 100;
     req.body.roi = (req.body.amount * 60) / 100;
-    req.body.startDate = new Date().getTime();
-    req.body.endDate = new Date(req.body.startDate + (364*24*60*60*1000));
 
     const created = await Subscribers.create(req.body);
     if(created) {

@@ -33,11 +33,11 @@ const Subscribers = sequelize.define('Subscribers', {
     },
     startDate: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
     },
     endDate: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
     },
     amount: {
         type: DataTypes.DOUBLE,

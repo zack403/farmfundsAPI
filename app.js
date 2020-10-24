@@ -60,7 +60,7 @@ Subscribers.hasOne(Purchase);
 Purchase.belongsTo(Subscribers);
 
 
-sequelize.sync({force: true}).then(s => {
+sequelize.sync({alter: true}).then(s => {
     app.listen(port, () => winston.info(`Listening on port ${port}...`));
     seed();
     sendItemsNotifier();
