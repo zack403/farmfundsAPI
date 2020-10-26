@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authorizedMiddleWare = require('../middlewares/auth');
 const {User} = require('../models/users.model');
-const { Op } = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
 const {Investment} = require('../models//investments.model');
 const {Purchase} = require('../models/purchases.model');
 const {PurchaseDetail} = require('../models/purchaseDetails.model');
@@ -18,6 +18,21 @@ let totalInvAmount = [];
 let totalInvRoi = [];
 
 //userdahsboard
+
+router.get('/fooddashboard', authorizedMiddleWare, async(req, res) => {
+      const totalSubs = await Subscribers.sum('amount');
+      const totalRois = await Subscribers.sum('roi');
+      const totalRocs = await Subscribers.sum('roc');
+      const totalOrders = await Purchase.sum('amount');
+      res.json({totalSubs, totalOrders, totalRois, totalRocs})
+})
+
+
+router.get('/farminvestmentdashboard', authorizedMiddleWare, async(req, res) => {
+
+})
+
+
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
    
@@ -104,6 +119,7 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
         subscribers
     });
 })
+
 
 const sumAmount = (total, num) => {
     return parseInt(total) + parseInt(num);
