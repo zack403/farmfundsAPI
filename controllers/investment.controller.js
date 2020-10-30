@@ -68,7 +68,7 @@ router.post('/', [authorizedMiddleWare, upload.single('proofofpayment')], async(
     }
 
     if(req.body.paymentType === 'Transfer') {
-
+        req.body.roi = 0.00;
         if (!req.file) return res.status(400).send(errorHandler(400, 'Proof of payment is required'));
         try {
             const result = await imageUpload(req.file.path);
@@ -88,12 +88,12 @@ router.post('/', [authorizedMiddleWare, upload.single('proofofpayment')], async(
         req.body.startDate = new Date().getTime();
         req.body.endDate = new Date(req.body.startDate + (parseInt(isPckageExist.cycle)*24*60*60*1000));
         req.body.status = 'Activated';
+        req.body.roi = (req.body.amount * isPckageExist.profit) / 100;
     }
 
 
     req.body.UserId = id;
     req.body.amount = isPckageExist.amountPerUnit * parseInt(req.body.unit);
-    req.body.roi = (req.body.amount * isPckageExist.profit) / 100;
     req.body.email = req.user.email;
 
     const isCreated = await Investment.create(req.body);
@@ -169,7 +169,8 @@ router.put('/activateinvestment/:id', [authorizedMiddleWare, isAdmin], async(req
     if(item != null){
         const start = new Date().getTime();
         const end = new Date(start + (parseInt(package.cycle)*24*60*60*1000))
-        const updated = await item.update({status: "Activated", startDate: start, endDate: end});
+        const roi = (item.amount * item.profit) / 100;
+        const updated = await item.update({status: "Activated", roi: roi, startDate: start, endDate: end});
         if(updated) {
 
                 // deduct from balance
