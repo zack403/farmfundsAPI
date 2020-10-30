@@ -93,8 +93,7 @@ router.post('/', [authorizedMiddleWare, upload.single('proofofpayment')], async(
 
     req.body.UserId = id;
     req.body.amount = isPckageExist.amountPerUnit * parseInt(req.body.unit);
-    const roi = (req.body.amount * isPckageExist.profit) / 100;
-    req.body.roi = req.body.amount + roi;
+    req.body.roi = (req.body.amount * isPckageExist.profit) / 100;
     req.body.email = req.user.email;
 
     const isCreated = await Investment.create(req.body);
