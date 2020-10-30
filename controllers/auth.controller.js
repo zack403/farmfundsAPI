@@ -6,6 +6,7 @@ const {User, IsValid} = require('../models/users.model');
 const {PasswordResetToken} = require('../models/passwordResetToken.model');
 const Joi = require('@hapi/joi');
 const generateAuthToken = require('../helpers/generateAuthToken');
+const jwt = require("jsonwebtoken");
 const config = require('config');
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(config.get('sendgrid_key'));
@@ -170,6 +171,14 @@ router.post('/register', async (req, res) => {
     const user = await PasswordResetToken.findOne({where: {resetToken: req.body.resettoken}});
     if (!user) {
       return res.status(400).send(errorHandler(400, 'Invalid URL'));
+    }
+
+    //check if token has expired
+    try {
+       jwt.verify(token, config.get("fm_key"));
+    } catch (ex) {
+      const decodedError = errorHandler(401, "Token expired!");
+      return res.status(401).send(decodedError);
     }
 
     const updated = await User.update(user, { where: {id: user.UserId }});

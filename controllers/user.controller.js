@@ -106,8 +106,8 @@ router.get('/:id', authorizedMiddleWare, async ({params: { id: userId } }, res) 
     subscribers.subs = singleUser.dataValues.Subscribers;
     purchases.purchases = singleUser.dataValues.Purchases;
 
-    const user = singleUser.middleName ? `${singleUser.firstName} ${singleUser.middleName} ${singleUser.lastName}` : `${singleUser.firstName} ${singleUser.lastName}` ;
-
+    // const user = singleUser.middleName ? `${singleUser.firstName} ${singleUser.middleName} ${singleUser.lastName}` : `${singleUser.firstName} ${singleUser.lastName}` ;
+    const user = singleUser;
     return res.status(200).send(successHandler(200, { user, investments, subscribers, purchases}));
 
 })
