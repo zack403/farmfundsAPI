@@ -17,7 +17,7 @@ const {Subscribers} = require('../models/subscribers.model');
 let totalInvAmount = []; 
 let totalInvRoi = [];
 
-//userdahsboard
+//food dashboard start 
 
 router.get('/fooddashboard', authorizedMiddleWare, async(req, res) => {
       const totalSubs = await Subscribers.sum('amount', {where: { status: 'Activated' } });
@@ -28,13 +28,47 @@ router.get('/fooddashboard', authorizedMiddleWare, async(req, res) => {
 })
 
 router.get('/fooddashboard/monthlysales', authorizedMiddleWare, async(req, res) => {
-    // const result = await Purchase
-     res.json({})
+    try {
+        const result = await Purchase.findAll({
+            where: Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), new Date().getFullYear()),
+            attributes: [
+                [ Sequelize.literal('to_char("createdAt",\'month\')'), 'monthName'],
+                [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
+              ],
+            order: [[Sequelize.literal('"monthName"'), 'DESC']],
+            group: 'monthName'
+        });
+    
+         res.json(result);
+        
+    } catch (error) {
+        console.log("err", error);
+    }
 })
 
 router.get('/fooddashboard/yearlysales', authorizedMiddleWare, async(req, res) => {
-    // const result = await Purchase
-     res.json({})
+    let m;
+    const finalResult = [];
+    try {
+        for (m = 0; m < 3; m++) {
+            let year = new Date().getFullYear() - m; 
+            
+            const result = await Purchase.findAll({
+                where: Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), year),
+                attributes: [
+                    [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
+                  ]
+            });
+
+            const returnVal = result[0].dataValues;
+            finalResult.push(returnVal.totalAmount ? returnVal.totalAmount : 0);
+        }
+        
+         res.json(finalResult);
+
+    } catch (error) {
+        console.log("err", error);
+    }
 })
 
 router.get('/fooddashboard/topfivecustomer', authorizedMiddleWare, async(req, res) => {
@@ -46,6 +80,19 @@ router.get('/fooddashboard/topfivecustomer', authorizedMiddleWare, async(req, re
             [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
           ],
         group: 'name', 
+        limit: 5
+    })
+    res.json(result);
+})
+
+router.get('/fooddashboard/topfiveproducts', authorizedMiddleWare, async(req, res) => {
+    
+    const result = await PurchaseDetail.findAll({
+        attributes: [
+            'productName',
+            [Sequelize.fn('sum', Sequelize.col('price')), 'totalPrice'],
+          ],
+        group: 'productName', 
         limit: 5
     })
     res.json(result);
@@ -91,6 +138,11 @@ router.get('/fooddashboard/orderInfo', authorizedMiddleWare, async(req, res) => 
     res.json({today, thisWeek, lastWeek});
 })
 
+//food dashboard end 
+
+
+
+//farm investments dashboard start 
 router.get('/farminvestmentdashboard', authorizedMiddleWare, async(req, res) => {
     const totalInvs = await Investment.sum('amount',  {where: { status: 'Activated' } });
     const totalRois = await Investment.sum('roi', {where: { status: 'Activated' } });
@@ -109,10 +161,79 @@ router.get('/farminvestmentdashboard/invInfo', authorizedMiddleWare, async(req, 
     res.json({pendingInv, activeInv});
 })
 
-router.get('/farminvestmentdashboard/invSummary', authorizedMiddleWare, async(req, res) => {
-    const invSummary = await Investment.findAll();
-    res.json({invSummary});
+
+router.get('/farminvestmentdashboard/monthlyinvs', authorizedMiddleWare, async(req, res) => {
+    try {
+        const result = await Investment.findAll({
+            where: Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), new Date().getFullYear()),
+            attributes: [
+                [ Sequelize.literal('to_char("createdAt",\'month\')'), 'monthName'],
+                [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
+              ],
+            order: [[Sequelize.literal('"monthName"'), 'DESC']],
+            group: 'monthName'
+        });
+    
+         res.json(result);
+        
+    } catch (error) {
+        console.log("err", error);
+    }
 })
+
+router.get('/farminvestmentdashboard/yearlyinvs', authorizedMiddleWare, async(req, res) => {
+    let m;
+    const finalResult = [];
+    try {
+        for (m = 0; m < 3; m++) {
+            let year = new Date().getFullYear() - m; 
+            
+            const result = await Investment.findAll({
+                where: Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), year),
+                attributes: [
+                    [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
+                  ]
+            });
+
+            const returnVal = result[0].dataValues;
+            finalResult.push(returnVal.totalAmount ? returnVal.totalAmount : 0);
+        }
+        
+         res.json(finalResult);
+
+    } catch (error) {
+        console.log("err", error);
+    }
+})
+
+
+router.get('/farminvestmentdashboard/topfiveinvestors', authorizedMiddleWare, async(req, res) => {
+    
+    const result = await Investment.findAll({
+        where: {status: 'Activated'}, 
+        attributes: [
+            'investor',
+            [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
+          ],
+        group: 'investor', 
+        limit: 5
+    })
+    res.json(result);
+})
+
+router.get('/farminvestmentdashboard/topfivefarms', authorizedMiddleWare, async(req, res) => {
+    
+    const result = await Investment.findAll({
+        attributes: [
+            'package',
+            [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
+          ],
+        group: 'package', 
+        limit: 5
+    })
+    res.json(result);
+})
+//farm investments dashboard end
 
 router.get('/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
