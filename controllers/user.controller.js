@@ -8,7 +8,8 @@ const errorHandler = require('../helpers/errorHandler');
 const successHandler = require('../helpers/successHandler');
 const getPagination = require('../helpers/getPagination');
 const getPagingData = require('../helpers/getPagingData');
-const { Op } = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
+
 
 
 
@@ -61,8 +62,12 @@ router.get('/:id', authorizedMiddleWare, async ({params: { id: userId } }, res) 
         totalOrder: 0
     };
 
+    // attributes: [
+    //     [Sequelize.fn('sum', Sequelize.col('Investments.amount')), 'totalInvAmount'],
+    //     [Sequelize.fn('sum', Sequelize.col('Investments.roi')), 'totalInvRoi'],
 
-    const singleUser = await User.findByPk(userId, {include: [{all: true, nested: true}]});
+    // ],
+    const singleUser = await User.findByPk(userId, { include: [{all: true, nested: true}]});
     if(singleUser === null) return res.status(404).send(errorHandler(404, 'User not found'));
 
     delete singleUser.dataValues.password; 
@@ -106,8 +111,7 @@ router.get('/:id', authorizedMiddleWare, async ({params: { id: userId } }, res) 
     subscribers.subs = singleUser.dataValues.Subscribers;
     purchases.purchases = singleUser.dataValues.Purchases;
 
-    // const user = singleUser.middleName ? `${singleUser.firstName} ${singleUser.middleName} ${singleUser.lastName}` : `${singleUser.firstName} ${singleUser.lastName}` ;
-    const user = singleUser;
+    const user = singleUser.middleName ? `${singleUser.firstName} ${singleUser.middleName} ${singleUser.lastName}` : `${singleUser.firstName} ${singleUser.lastName}` ;
     return res.status(200).send(successHandler(200, { user, investments, subscribers, purchases}));
 
 })

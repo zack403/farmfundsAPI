@@ -161,7 +161,6 @@ router.get('/farminvestmentdashboard/invInfo', authorizedMiddleWare, async(req, 
     res.json({pendingInv, activeInv});
 })
 
-
 router.get('/farminvestmentdashboard/monthlyinvs', authorizedMiddleWare, async(req, res) => {
     try {
         const result = await Investment.findAll({
@@ -320,6 +319,12 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
 
     return res.status(200).send({
         status : 200,
+        user: { id: result.dataValues.id, firstName: result.dataValues.firstName,
+                middleName:  result.dataValues.middleName,
+                lastName:result.dataValues.lastName,
+                email: result.dataValues.email,
+                phoneNo: result.dataValues.phoneNo
+            },
         investments,
         purchases,
         subscribers

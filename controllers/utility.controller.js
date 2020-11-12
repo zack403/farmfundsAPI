@@ -198,6 +198,10 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
 
 });
 
+router.post('/migration', async (req, res) => {
+    
+})
+
 
 const ValidateContactUs = req => {
     const schema = Joi.object({
