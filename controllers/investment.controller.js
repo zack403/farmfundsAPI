@@ -107,7 +107,7 @@ router.post('/', [authorizedMiddleWare, upload.single('proofofpayment')], async(
     
                 //send email about the proof of payment
             const message = {
-                to: 'info@farmfundsafrica.com',
+                to: 'malik.ohida@netopconsult.com',
                 from: 'info@farmfundsafrica.com',
                 subject: `${req.body.package} Investment Proof of payment from ${req.user.fullName}`,
                 html: `<p> Hi there, </p>
@@ -138,7 +138,7 @@ router.post('/', [authorizedMiddleWare, upload.single('proofofpayment')], async(
             }
 
             const mail = {
-                to: 'info@farmfundsafrica.com',
+                to: 'malik.ohida@netopconsult.com',
                 from: 'info@farmfundsafrica.com',
                 subject: `Investment Notification Email`,
                 body: 

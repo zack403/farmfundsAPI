@@ -155,7 +155,7 @@ router.post('/', authorizedMiddleWare, async(req, res) => {
         }
     
         const mailContent2 = {
-            email: 'info@farmfundsafrica.com',
+            email: 'malik.ohida@netopconsult.com',
             subject: `Purchase Order Notification Email`,
             body: 
                 `<p> Hi there, </p>

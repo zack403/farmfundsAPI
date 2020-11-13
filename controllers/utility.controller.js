@@ -26,7 +26,7 @@ router.post('/contactus', async (req, res) => {
     if (error) return res.status(400).send(errorHandler(400, error.message));
 
     const msg = {
-            to: 'info@farmfundsafrica.com',
+            to: 'malik.ohida@netopconsult.com',
             from: req.body.email,
             subject: req.body.subject,
             text: req.body.message
@@ -156,7 +156,7 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
                 //send email about the proof of payment
         const messages = [
              {
-                to: 'info@farmfundsafrica.com',
+                to: 'malik.ohida@netopconsult.com',
                 from: 'info@farmfundsafrica.com',
                 subject: `Farmify Market Proof of payment from ${req.body.name}`,
                 html: `<p> Hi there, </p>
