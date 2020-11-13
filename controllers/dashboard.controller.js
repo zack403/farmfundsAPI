@@ -7,6 +7,8 @@ const {Investment} = require('../models//investments.model');
 const {Purchase} = require('../models/purchases.model');
 const {PurchaseDetail} = require('../models/purchaseDetails.model');
 const {Subscribers} = require('../models/subscribers.model');
+const errorHandler = require('../helpers/errorHandler');
+const dateRangeFilter = require('../helpers/dateRangeFilter');
 
 
 
@@ -71,23 +73,35 @@ router.get('/fooddashboard/yearlysales', authorizedMiddleWare, async(req, res) =
     }
 })
 
-router.get('/fooddashboard/topfivecustomer', authorizedMiddleWare, async(req, res) => {
+router.get('/fooddashboard/topfivecustomer/', authorizedMiddleWare, async(req, res) => {
+
+    const {dateRange} = req.query;
+    if(!dateRange) return res.status(400).send(errorHandler(400, 'Missing dateRange query'));
     
+    const filter = dateRangeFilter(dateRange, 'Delivered');
+
     const result = await Purchase.findAll({
-        where: {status: 'Delivered'}, 
-        attributes: [
-            'name',
-            [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
-          ],
-        group: 'name', 
-        limit: 5
-    })
-    res.json(result);
+            where: filter, 
+            attributes: [
+                'name',
+                [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
+              ],
+            group: 'name', 
+            limit: 5
+        })
+
+    res.json(result); 
 })
 
 router.get('/fooddashboard/topfiveproducts', authorizedMiddleWare, async(req, res) => {
     
+    const {dateRange} = req.query;
+    if(!dateRange) return res.status(400).send(errorHandler(400, 'Missing dateRange query'));
+    
+    const filter = dateRangeFilter(dateRange, '');
+
     const result = await PurchaseDetail.findAll({
+        where: filter,
         attributes: [
             'productName',
             [Sequelize.fn('sum', Sequelize.col('price')), 'totalPrice'],
@@ -99,6 +113,14 @@ router.get('/fooddashboard/topfiveproducts', authorizedMiddleWare, async(req, re
 })
 
 router.get('/fooddashboard/orderInfo', authorizedMiddleWare, async(req, res) => {    
+
+    let today;
+    let thisWeek;
+    let lastWeek;
+
+    const {dateRange} = req.query;
+    if(!dateRange) return res.status(400).send(errorHandler(400, 'Missing dateRange query'));
+
     const TODAY_START = new Date(new Date().setHours(0, 0, 0, 0));
     const NOW = new Date();
 
@@ -108,32 +130,77 @@ router.get('/fooddashboard/orderInfo', authorizedMiddleWare, async(req, res) => 
 
     const lastWeekEndDate = new Date(firstDayOfWeek(new Date(new Date().setDate(new Date().getDate() - 7)), 0).getTime() + 6*24*60*60*1000);
 
-    const today = await Purchase.count({
-        where: {
-            createdAt: { 
-              [Op.gte]: TODAY_START,
-              [Op.lte]: NOW
+    if(dateRange === "All") {
+        today = await Purchase.count({
+            where: {
+                createdAt: { 
+                        [Op.gte]: TODAY_START,
+                        [Op.lte]: NOW
+                }
             }
-        }
-    });
+        });
+    
+        thisWeek = await Purchase.count({
+            where: {
+                    createdAt: { 
+                        [Op.gte]: thisWeekDate,
+                        [Op.lte]: NOW
+                    }
+            }
+        });
+    
+        lastWeek = await Purchase.count({
+            where: {
+                    createdAt: { 
+                        [Op.gte]: lastWeekDate,
+                        [Op.lte]: lastWeekEndDate
+                    }
+            }
+        });
 
-    const thisWeek = await Purchase.count({
-        where: {
-            createdAt: { 
-              [Op.gte]: thisWeekDate,
-              [Op.lte]: NOW
+    } else {
+         today = await Purchase.count({
+            where: {
+                [Op.and]: [
+                    {createdAt: { 
+                        [Op.gte]: TODAY_START,
+                        [Op.lte]: NOW
+                      }
+                    },
+                    {status: dateRange}
+                ]
+                
             }
-        }
-    });
-
-    const lastWeek = await Purchase.count({
-        where: {
-            createdAt: { 
-              [Op.gte]: lastWeekDate,
-              [Op.lte]: lastWeekEndDate
+        });
+    
+        thisWeek = await Purchase.count({
+            where: {
+                [Op.and]: [
+                    {createdAt: { 
+                        [Op.gte]: thisWeekDate,
+                        [Op.lte]: NOW
+                      }
+                    },
+                    {status: dateRange}
+                ]
+                
             }
-        }
-    });
+        });
+    
+        lastWeek = await Purchase.count({
+            where: {
+                [Op.and]: [
+                    {createdAt: { 
+                        [Op.gte]: lastWeekDate,
+                        [Op.lte]: lastWeekEndDate
+                      }
+                    },
+                    {status: dateRange}
+                ]   
+            }
+        });
+    }
+ 
 
     res.json({today, thisWeek, lastWeek});
 })
@@ -208,8 +275,13 @@ router.get('/farminvestmentdashboard/yearlyinvs', authorizedMiddleWare, async(re
 
 router.get('/farminvestmentdashboard/topfiveinvestors', authorizedMiddleWare, async(req, res) => {
     
+    const {dateRange} = req.query;
+    if(!dateRange) return res.status(400).send(errorHandler(400, 'Missing dateRange query'));
+    
+    const filter = dateRangeFilter(dateRange, 'Activated');
+
     const result = await Investment.findAll({
-        where: {status: 'Activated'}, 
+        where: filter, 
         attributes: [
             'investor',
             [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
@@ -222,7 +294,13 @@ router.get('/farminvestmentdashboard/topfiveinvestors', authorizedMiddleWare, as
 
 router.get('/farminvestmentdashboard/topfivefarms', authorizedMiddleWare, async(req, res) => {
     
+    const {dateRange} = req.query;
+    if(!dateRange) return res.status(400).send(errorHandler(400, 'Missing dateRange query'));
+    
+    const filter = dateRangeFilter(dateRange, '');
+
     const result = await Investment.findAll({
+        where: filter,
         attributes: [
             'package',
             [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
