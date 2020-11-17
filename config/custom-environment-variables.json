@@ -6,5 +6,6 @@
     "CLOUDINARY_API_KEY" : "api_key",
     "CLOUDINARY_API_SECRET" : "api_secret",
     "adminEmail" : "adminEmail",
-    "adminPassword" : "adminPassword"
+    "adminPassword" : "adminPassword",
+    "userPassword" : "userPassword"
 }

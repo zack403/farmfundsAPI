@@ -64,7 +64,7 @@ const Subscribers = sequelize.define('Subscribers', {
     indexes: [
         {
             unique: false,
-            fields: ['id', 'UserId', 'name', 'email', 'status']
+            fields: ['id', 'createdAt', 'UserId', 'name', 'email', 'status']
         }
     ]
 }

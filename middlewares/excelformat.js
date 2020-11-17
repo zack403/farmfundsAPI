@@ -11,6 +11,15 @@ const excelFilter = (req, file, cb) => {
   }
 };
 
+var storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, './CustomerOrderExcel/');
+    },
+    filename: (req, file, cb) => {
+      console.log(file.originalname);
+      cb(null, `${Date.now()}-migration-${file.originalname}`);
+    },
+});
 
-var uploadFile = multer({ storage: multer.diskStorage({}), fileFilter: excelFilter });
+var uploadFile = multer({storage: storage, fileFilter: excelFilter });
 module.exports = uploadFile;

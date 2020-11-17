@@ -219,6 +219,7 @@ router.post('/register', async (req, res) => {
 
       user.dataValues.password = hashedPassword;
       user.dataValues.confirmPassword = hashedPassword;
+      user.dataValues.passwordChanged = true;
 
       const updated = await User.update(user.dataValues, {where: {id: user.id}});
 

@@ -244,6 +244,7 @@ router.get('/farminvestmentdashboard/monthlyinvs', authorizedMiddleWare, async(r
         
     } catch (error) {
         console.log("err", error);
+        res.status(400).send(errorHandler(400, error.message));
     }
 })
 
@@ -269,6 +270,7 @@ router.get('/farminvestmentdashboard/yearlyinvs', authorizedMiddleWare, async(re
 
     } catch (error) {
         console.log("err", error);
+        res.status(400).send(errorHandler(400, error.message));
     }
 })
 

@@ -52,7 +52,17 @@ const User = sequelize.define('User', {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false
-    }
+    },
+    isMigrated: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    passwordChanged: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
 },
 {
     indexes: [
