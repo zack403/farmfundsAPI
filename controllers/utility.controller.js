@@ -16,8 +16,17 @@ const successHandler = require('../helpers/successHandler');
 const { Op } = require("sequelize");
 const imageUpload = require('../helpers/imageUpload');
 const deleteImage = require('../helpers/deleteImage');
+const readXlsxFile = require("read-excel-file/node");
+const excelUpload = require("../middlewares/excelformat");
+const { uuid } = require('uuidv4');
+const {User} = require('../models/users.model');
+const {Investment} = require('../models/investments.model');
+const bcrypt = require('bcrypt');
 
 
+let messages = [];
+let msg = {};
+let errors = [];
 
 
 //contactus
@@ -198,8 +207,127 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
 
 });
 
-router.post('/migration', async (req, res) => {
+router.post('/migration', excelUpload.single("file"), async (req, res) => {
+
+    messages = [];
+    msg = {};
+    errors = []
+
+    try {
+        if (!req.file) {
+          return res.status(400).send(errorHandler(400, "Please upload an excel file!"));
+        }
     
+        let path = "./CustomerOrderExcel/" + req.file.filename;
+    
+        readXlsxFile(path).then( async (rows) => {
+          // skip header
+          rows.shift();
+    
+          if(req.body.migrationType === 'customers') {
+
+            let existingUsers = [];
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(config.get('userPassword'), salt);
+    
+            rows.forEach((row) => {
+              let user = {
+                id: uuid(),
+                firstName: row[0],
+                lastName: row[1],
+                middleName: row[2],
+                bankName: row[3],
+                acctNo: row[4],
+                email: row[5],
+                phoneNo: row[6],
+                password: hashedPassword,
+                confirmPassword: hashedPassword,
+                isAdmin: false,
+                isMigrated: true
+              };
+      
+              existingUsers.push(user);
+              
+              //construct a welcome email
+              msg.to = row[5];
+              msg.from = 'info@farmfundsafrica.com';
+              msg.subject = `Welcome to the new Farmfunds Africa platform`,
+              msg.html = `<p> Dear <strong>${row[0]} ${row[1]}</strong>, welcome aboard! </p>
+                  <p> In order to get started, you will need to login first and change your default password.</p>
+                  <p> your default password is <strong>'password'</strong>. </p>
+                  <p> Please login to your account and proceed to change your password before doing anything else.</p>
+                  <p> Click on the following link to login:\n\n
+                   http://localhost:4200/login</p>
+                  <p> Thank you for choosing <strong> Farm Funds Africa. </strong></p>`
+
+              messages.push(msg);
+              msg = {};
+
+            });
+      
+            try {
+                const created = await User.bulkCreate(existingUsers);
+                if(created) {
+                    await sgMail.send(messages);
+                    res.status(200).send({
+                        message: "Uploaded the file successfully: " + req.file.originalname,
+                    });
+                }
+                    
+            } catch (error) {
+                res.status(500).send(errorHandler(500, `Fail to import data into database!- ${error.message}`));
+            }
+           
+          } else {
+            let existingInvs = [];
+    
+
+            for (const [i, row] of rows.entries()) {
+                const result = await User.findOne({attributes: [ 'id'
+                    ], where: {email: row[8]}});
+
+                if(!result || !result.id) {
+                    errors.push(`Please make sure the investment at line number ${i + 1} with name "${row[0]}" and amount "${row[1]}" belongs to a valid "Customer" by making sure the email "${row[8]}" on the excel matches the system customer email.`);
+                    continue;
+                }
+
+                let investment = {
+                    id: uuid(),
+                    package: row[0],
+                    amount: row[1],
+                    roi: row[2],
+                    investor: row[3],
+                    unit: row[4],
+                    startDate: new Date(row[5]),
+                    endDate: new Date(row[6]),
+                    status: row[7],
+                    email: row[8],
+                    UserId: result.id,
+                    paymentType: 'Transfer',
+                    packageId: uuid()
+                };
+        
+                existingInvs.push(investment);
+            }
+      
+            try {
+                const created = await Investment.bulkCreate(existingInvs);
+                if(created) {
+                    res.status(200).send({
+                        message: "Uploaded the file successfully: " + req.file.originalname,
+                        errors: errors.length > 0 ? errors : []
+                    });
+                }
+            } catch (error) {
+                res.status(500).send(errorHandler(500, `Fail to import data into database!- ${error.message}`));
+            }   
+        }
+        });
+      } catch (error) {
+        console.log(error);
+        res.status(500).send(errorHandler(500, "Could not upload the file: " + req.file.originalnam));
+      }
 })
 
 

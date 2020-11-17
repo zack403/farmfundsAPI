@@ -64,7 +64,7 @@ const Investment = sequelize.define('Investment', {
     indexes: [
         {
             unique: false,
-            fields: ['id', 'investor', 'status']
+            fields: ['id', 'createdAt', 'investor', 'status']
         }
     ]
 }

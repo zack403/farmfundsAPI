@@ -34,7 +34,7 @@ const PurchaseDetail = sequelize.define('PurchaseDetail', {
     indexes: [
         {
             unique: false,
-            fields: ['id', 'productName']
+            fields: ['id', 'createdAt', 'productName']
         }
     ]
 }
