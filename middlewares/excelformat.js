@@ -7,7 +7,7 @@ const excelFilter = (req, file, cb) => {
   ) {
     cb(null, true);
   } else {
-    cb("Please upload only excel file.", false);
+    cb({message:"Please upload only excel file." }, false);
   }
 };
 
