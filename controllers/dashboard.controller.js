@@ -32,7 +32,12 @@ router.get('/fooddashboard', authorizedMiddleWare, async(req, res) => {
 router.get('/fooddashboard/monthlysales', authorizedMiddleWare, async(req, res) => {
     try {
         const result = await Purchase.findAll({
-            where: Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), new Date().getFullYear()),
+            where: {
+                [Op.and]: [
+                    Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), new Date().getFullYear()),
+                    {status: 'Delivered'}
+                ]  
+            },
             attributes: [
                 [ Sequelize.literal('to_char("createdAt",\'month\')'), 'monthName'],
                 [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
@@ -56,7 +61,12 @@ router.get('/fooddashboard/yearlysales', authorizedMiddleWare, async(req, res) =
             let year = new Date().getFullYear() - m; 
             
             const result = await Purchase.findAll({
-                where: Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), year),
+                where: {
+                    [Op.and]: [
+                        Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), year),
+                        {status: 'Delivered'}
+                    ]
+                },
                 attributes: [
                     [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
                   ]
@@ -231,7 +241,11 @@ router.get('/farminvestmentdashboard/invInfo', authorizedMiddleWare, async(req, 
 router.get('/farminvestmentdashboard/monthlyinvs', authorizedMiddleWare, async(req, res) => {
     try {
         const result = await Investment.findAll({
-            where: Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), new Date().getFullYear()),
+            where: {
+                [Op.and]: [
+                    Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), new Date().getFullYear()),
+                    {status: 'Activated'}
+                ]},
             attributes: [
                 [ Sequelize.literal('to_char("createdAt",\'month\')'), 'monthName'],
                 [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
@@ -256,7 +270,11 @@ router.get('/farminvestmentdashboard/yearlyinvs', authorizedMiddleWare, async(re
             let year = new Date().getFullYear() - m; 
             
             const result = await Investment.findAll({
-                where: Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), year),
+                where: {
+                    [Op.and]: [
+                        Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), year),
+                        {status: 'Activated'}
+                    ]},
                 attributes: [
                     [Sequelize.fn('sum', Sequelize.col('amount')), 'totalAmount'],
                   ]
