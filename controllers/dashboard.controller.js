@@ -338,6 +338,8 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
     totalInvAmount = [];
     totalInvRoi = [];
     filteredInv = [];
+    filteredSub = [];
+
 
 
     // const result = await User.findOne({where: {id: req.params.id}, include: [{all: true,  nested: true, order: [['createdAt', 'DESC']]}]});
@@ -378,14 +380,13 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
         ]
     });
 
-
     
-
      let investments = {};
      let subscribers = {};
      const purchases = result.Purchases;
 
     filteredInv = result.Investments.filter(x => x.status === 'Activated');
+    filteredSub = result.Subscribers.filter(x => x.status === 'Activated');
 
     for(const {amount, roi} of filteredInv) {
         totalInvAmount.push(amount);
@@ -403,16 +404,16 @@ router.get('/:id', authorizedMiddleWare, async (req, res) => {
         investments.totalGain = 0;
     }
     investments.inv = result.Investments;
-    if(result.Subscribers.length > 0) {
-        subscribers.amount = result.Subscribers[0].amount;
-        subscribers.roi = result.Subscribers[0].roi;
-        subscribers.roc = result.Subscribers[0].roc;
+
+    if(filteredSub.length > 0) {
+        subscribers.amount = filteredSub[0].amount;
+        subscribers.roi = filteredSub[0].roi;
+        subscribers.roc = filteredSub[0].roc;
     } else {
         subscribers.amount = 0;
         subscribers.roi = 0;
         subscribers.roc = 0;
     }
-   
     subscribers.subs = result.Subscribers;
 
     return res.status(200).send({
