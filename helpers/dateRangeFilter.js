@@ -1,12 +1,13 @@
 const { Sequelize, Op } = require("sequelize");
 
 
-module.exports = function (dateRange, status) {
+module.exports = function (dateRange, status, amt) {
     let filter;
     if(dateRange === 'today') {
 
         filter =  { 
             [Op.and]: [
+                amt ? {amount: {[Op.gt]: 0}} : '',
                 status ? {status: status} : '',
                 {createdAt: { 
                     [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -19,6 +20,7 @@ module.exports = function (dateRange, status) {
         
         filter =  { 
             [Op.and]: [
+                amt ? {amount: {[Op.gt]: 0}} : '',
                 status ? {status: status} : '',
                 Sequelize.where(Sequelize.fn("date_part",'month', Sequelize.col('createdAt')), new Date().getMonth() + 1)
             ]
@@ -27,6 +29,7 @@ module.exports = function (dateRange, status) {
 
         filter =  { 
             [Op.and]: [
+                amt ? {amount: {[Op.gt]: 0}} : '',
                 status ? {status: status} : '',
                 Sequelize.where(Sequelize.fn("date_part",'year', Sequelize.col('createdAt')), new Date().getFullYear())
             ]
