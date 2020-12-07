@@ -13,7 +13,7 @@ const isAdmin = require('../middlewares/admin');
 const getPagination = require('../helpers/getPagination');
 const getPagingData = require('../helpers/getPagingData');
 const successHandler = require('../helpers/successHandler');
-const { Op } = require("sequelize");
+const {  Op } = require("sequelize");
 const imageUpload = require('../helpers/imageUpload');
 const deleteImage = require('../helpers/deleteImage');
 const readXlsxFile = require("read-excel-file/node");
@@ -22,7 +22,16 @@ const { uuid } = require('uuidv4');
 const {User} = require('../models/users.model');
 const {Investment} = require('../models/investments.model');
 const bcrypt = require('bcrypt');
+const dateRangeFilter = require('../helpers/dateRangeFilter');
+const {Notification} = require('../models/notifications.model');
 
+
+
+const formatter = new Intl.NumberFormat('en-NI', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 2
+})
 
 let messages = [];
 let msg = {};
@@ -329,6 +338,142 @@ router.post('/migration', excelUpload.single("file"), async (req, res) => {
         res.status(500).send(errorHandler(500, "Could not upload the file: " + req.file.originalnam));
       }
 })
+
+
+router.get('/deposits', authorizedMiddleWare, async (req, res) => {
+    const {id, dateRange} = req.query;
+    if(!id) return res.status(400).send(errorHandler(400, 'Missing id param'));
+
+    if(!dateRange) return res.status(400).send(errorHandler(400, 'Missing dateRange query'));
+    
+    const filter = dateRangeFilter(dateRange, 'Activated', 'amount');
+
+
+    const isExist = await User.findOne({where: {id: id}, attributes: ['id'], order: [['createdAt', 'DESC']],
+                include: [
+                    {
+                        model: Investment,
+                        where: filter,
+                        attributes: [
+                            'amount',
+                            'package',
+                            'startDate'
+                        ], 
+                        separate: true,
+                        order: [['createdAt', 'DESC']],
+                        required: false
+                    },
+                    {
+                        model: Subscribers,
+                        where: filter,
+                        attributes: [
+                            'amount',
+                            ['name', 'package'],
+                            'startDate'
+                        ],
+                        separate: true,
+                        order: [['createdAt', 'DESC']],
+                        required: false,
+                    }
+                ]
+            });
+
+    if(isExist === null) return res.status(404).send(errorHandler(404, 'User not found'));
+
+    res.json(isExist);
+
+
+});
+
+router.get('/withdrawals', authorizedMiddleWare, async (req, res) => {
+    const {id, dateRange} = req.query;
+    if(!id) return res.status(400).send(errorHandler(400, 'Missing id param'));
+
+    if(!dateRange) return res.status(400).send(errorHandler(400, 'Missing dateRange query'));
+    
+    const filter = dateRangeFilter(dateRange, 'Activated', 'amount');
+    
+
+    const result = await User.findOne({where: {id: id}, attributes: ['id'], order: [['createdAt', 'DESC']],
+                 include: [
+                     {
+                         model: Investment,
+                         where: filter,
+                         attributes: [
+                             'id',
+                             ['roi', 'amount'],
+                             'package',
+                             'endDate'
+                         ], 
+                         separate: true,
+                         order: [['createdAt', 'DESC']],
+                         required: false
+                     },
+                     {
+                         model: Subscribers,
+                         where: filter,
+                         attributes: [
+                             'id',
+                             ['roc', 'amount'],
+                             ['name', 'package'],
+                             'endDate'
+                         ],
+                         separate: true,
+                         order: [['createdAt', 'DESC']],
+                         required: false,
+                     }
+                 ],
+             });
+
+        res.json(result);
+});
+
+
+router.post('/request', authorizedMiddleWare, async (req, res) => {
+    if(!req.body || !req.body.id || !req.body.userId) return res.status(400).send(errorHandler(400, 'Bad request'));
+    req.body.endDate = new Date(req.body.endDate);
+    let isInvsExist;
+
+    const {id, userId, package, endDate, amount} = req.body;
+
+    if(package.includes('Food Bank')) {
+        const isSubExist = await Subscribers.findByPk(id);
+        if(isSubExist === null) return res.status(404).send(errorHandler(404, 'Invalid request'));
+    } else {
+        isInvsExist = await Investment.findByPk(id);
+        if(isInvsExist === null) return res.status(404).send(errorHandler(404, 'Invalid request'));
+    }
+
+    let currentDate = new Date();
+    if(currentDate < endDate) {
+        let diffInTime = endDate.getTime() - currentDate.getTime();
+        let waitTime = diffInTime / (1000 * 3600 * 24);
+        return res.status(400).send(errorHandler(400, `You cannot request for a withdrawal at this time. Wait for ${waitTime.toFixed(0)} days.`));
+    }
+
+
+    //process user withdrawal request here
+    const {fullName} = req.user;
+    if(!fullName) return res.status(401).send(errorHandler(404, 'Unauthorized'));
+
+    const request = {
+        userId,
+        serviceId: id,
+        message: `Hi there, customer ${fullName} has requested for the withdrawal of ${formatter.format(amount)} from his/her ${package} ${isInvsExist ? 'Investment' : ''}. Please respond asap.`
+    }
+
+    const created = await Notification.create(request);
+    if(created) {
+        return res.status(200).send(successHandler(200, "Withdrawwal request successful, we will get back to you."));
+
+    } else {
+        return res.status(500).send(errorHandler(500, "Sorry, we are unable to process your request at this time, try again."));
+
+    }
+
+});
+
+
 
 
 const ValidateContactUs = req => {
