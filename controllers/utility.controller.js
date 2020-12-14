@@ -59,6 +59,32 @@ router.post('/contactus', async (req, res) => {
     }
 })
 
+//feedback
+router.post('/feedback', authorizedMiddleWare, async (req, res) => {
+    const {error} = ValidateFeedback(req.body);
+    if (error) return res.status(400).send(errorHandler(400, error.message));
+
+    const {email, fullName} = req.user;
+
+    const msg = {
+            to: 'aminuzack7@gmail.com',
+            from: email,
+            subject: `Feedback from ${fullName}`,
+            html: `<strong> Feedback Type: </strong><p>${req.body.feedbackType}</p>
+            <strong> Feedback Description: </strong><p>${req.body.description}</p>`,
+        }
+
+    const result = await sgMail.send(msg);
+
+    if(result){
+        res.status(200).send({status: 200, message: "Thank you for sending us your feedback, we will act promptly!"});
+    }
+    else {
+        res.status(500).send({status: 500, message: "Something failed, error while submitting your feedback, please try again."});
+    }
+
+})
+
 //get all
 router.get('/getsubscribers', authorizedMiddleWare, async (req, res) => {
     const { page, size, search } = req.query;
@@ -448,13 +474,22 @@ router.post('/request', authorizedMiddleWare, async (req, res) => {
     if(currentDate < endDate) {
         let diffInTime = endDate.getTime() - currentDate.getTime();
         let waitTime = diffInTime / (1000 * 3600 * 24);
-        return res.status(400).send(errorHandler(400, `You cannot request for a withdrawal at this time. Wait for ${waitTime.toFixed(0)} days.`));
+        return res.status(400).send(errorHandler(400, `You cannot request for a withdrawal at this time. Due date is "${waitTime.toFixed(0)} days" from now.`));
     }
 
 
     //process user withdrawal request here
     const {fullName} = req.user;
     if(!fullName) return res.status(401).send(errorHandler(404, 'Unauthorized'));
+
+    const msg =  {
+        to: 'info@farmfundsafrica.com',
+        from: `${email}`,
+        subject: `Withdrawal request from ${req.body.name}`,
+        html: `<p> Hi there, </p>
+            <p> ${fullName} has requested for the withdrawal of ${formatter.format(amount)} from his/her ${package} ${isInvsExist ? 'Investment' : ''}.</p>
+            <p> Login to your admin app and confirm if payment is due for the customer. </p>`
+        }
 
     const request = {
         userId,
@@ -464,6 +499,11 @@ router.post('/request', authorizedMiddleWare, async (req, res) => {
 
     const created = await Notification.create(request);
     if(created) {
+        try {
+            await sgMail.send(msg);
+        } catch (error) {
+            //await sgMail.send(messages);
+        }
         return res.status(200).send(successHandler(200, "Withdrawwal request successful, we will get back to you."));
 
     } else {
@@ -473,7 +513,20 @@ router.post('/request', authorizedMiddleWare, async (req, res) => {
 
 });
 
+router.get('/notifications/:id', authorizedMiddleWare, async (req, res) => {
+    if(!req.params.id) {
+        return res.status(400).send(errorHandler(400, 'Missing id param'));
+    }
 
+    const hasNotification = await Notification.findAll({where: {userId: req.params.id}});
+    if(hasNotification === null) {
+        return res.status(404).send(errorHandler(404, 'Not found'));
+    }
+
+
+    return res.status(200).send(successHandler(200, hasNotification));
+
+})
 
 
 const ValidateContactUs = req => {
@@ -481,6 +534,14 @@ const ValidateContactUs = req => {
       name: Joi.string().required(),
       email : Joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
       message: Joi.string().required()
+  })
+  return schema.validate(req);
+}
+
+const ValidateFeedback = req => {
+    const schema = Joi.object({
+      feedbackType: Joi.string().required(),
+      description: Joi.string().required()
   })
   return schema.validate(req);
 }
