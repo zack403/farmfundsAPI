@@ -21,6 +21,10 @@ const Notifications = sequelize.define('Notifications', {
         type: DataTypes.STRING,
         allowNull : true
     },
+    forWho: {
+        type: DataTypes.STRING,
+        allowNull : false
+    },
     isViewed: {
         type: DataTypes.BOOLEAN,
         allowNull : false,

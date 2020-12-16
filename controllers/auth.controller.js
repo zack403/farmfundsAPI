@@ -12,6 +12,8 @@ const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(config.get('sendgrid_key'));
 const { Op } = require("sequelize");
 const authorizedMiddleWare = require('../middlewares/auth');
+const {Notification} = require('../models/notifications.model');
+
 
 
 
@@ -54,6 +56,17 @@ router.post('/register', async (req, res) => {
         console.log(error);
         return await sgMail.send(msg);
     }
+
+    if(isCreated.dataValues.id) {
+      const request = {
+          userId: isCreated.dataValues.id,
+          forWho: 'user',
+          message: `Welcome to farmfunds africa, Do make use of the help guidelines to start off easily.`
+      }
+  
+      await Notification.create(request);
+    }
+    
       return res.status(201).send({status: 201, message: "Account successfully created"});
     }
 

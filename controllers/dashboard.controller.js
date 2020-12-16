@@ -12,14 +12,74 @@ const dateRangeFilter = require('../helpers/dateRangeFilter');
 
 
 
-
-
-
-
 let totalInvAmount = []; 
 let totalInvRoi = [];
 
 //food dashboard start 
+router.get('/foodbankdashboard/:id', authorizedMiddleWare, async (req, res) => {
+    if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
+   
+    filteredSub = [];
+
+    const result = await User.findOne({where: {id: req.params.id}, order: [['createdAt', 'DESC']],
+        include: [
+            {
+                model: Subscribers,
+                separate: true,
+                order: [['createdAt', 'DESC']],
+                required: false,
+                where: {amount: {[Op.gt]: 0}},
+                include: [
+                    {all: true, order: [['createdAt', 'DESC']] }
+                ]
+            },
+            {
+                model: Purchase, 
+                separate: true,
+                order: [['createdAt', 'DESC']],
+                where: {amount: {[Op.gt]: 0}},
+                required: false,
+                include: [
+                    {
+                        all: true,
+                        order: [['createdAt', 'DESC']],
+
+                    }
+                ]
+            }
+        ]
+    });
+
+    
+     let subscribers = {};
+     const purchases = result.Purchases;
+
+    filteredSub = result.Subscribers.filter(x => x.status === 'Activated');
+
+    if(filteredSub.length > 0) {
+        subscribers.amount = filteredSub[0].amount;
+        subscribers.roi = filteredSub[0].roi;
+        subscribers.roc = filteredSub[0].roc;
+    } else {
+        subscribers.amount = 0;
+        subscribers.roi = 0;
+        subscribers.roc = 0;
+    }
+    subscribers.subs = result.Subscribers;
+
+    return res.status(200).send({
+        status : 200,
+        user: { id: result.dataValues.id, firstName: result.dataValues.firstName,
+                middleName:  result.dataValues.middleName,
+                lastName:result.dataValues.lastName,
+                email: result.dataValues.email,
+                phoneNo: result.dataValues.phoneNo
+            },
+        purchases,
+        subscribers
+    });
+
+})
 
 router.get('/fooddashboard', authorizedMiddleWare, async(req, res) => {
       const totalSubs = await Subscribers.sum('amount', {where: { status: 'Activated' } });
@@ -214,12 +274,64 @@ router.get('/fooddashboard/orderInfo', authorizedMiddleWare, async(req, res) => 
 
     res.json({today, thisWeek, lastWeek});
 })
-
 //food dashboard end 
 
 
 
 //farm investments dashboard start 
+router.get('/farminvdashboard/:id', authorizedMiddleWare, async (req, res) => {
+    if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
+   
+    totalInvAmount = [];
+    totalInvRoi = [];
+    filteredInv = [];
+
+    const result = await User.findOne({where: {id: req.params.id}, order: [['createdAt', 'DESC']],
+    include: [
+        {
+            model: Investment, 
+            separate: true,
+            order: [['createdAt', 'DESC']],
+            where: {amount: {[Op.gt]: 0}},
+            required: false
+        }
+    ]
+});
+
+ let investments = {};
+
+filteredInv = result.Investments.filter(x => x.status === 'Activated');
+
+for(const {amount, roi} of filteredInv) {
+    totalInvAmount.push(amount);
+    totalInvRoi.push(roi);
+}
+
+if(totalInvAmount.length > 0 && totalInvRoi.length > 0) {
+    investments.totalInv = totalInvAmount.reduce(sumAmount);
+    investments.totalRoi = totalInvRoi.reduce(sumRoi);
+    investments.totalGain = investments.totalInv + investments.totalRoi;
+} 
+else {
+    investments.totalInv = 0;
+    investments.totalRoi = 0;
+    investments.totalGain = 0;
+}
+investments.inv = result.Investments;
+
+return res.status(200).send({
+    status : 200,
+    user: { id: result.dataValues.id, firstName: result.dataValues.firstName,
+            middleName:  result.dataValues.middleName,
+            lastName:result.dataValues.lastName,
+            email: result.dataValues.email,
+            phoneNo: result.dataValues.phoneNo
+        },
+    investments
+});
+    
+})
+
 router.get('/farminvestmentdashboard', authorizedMiddleWare, async(req, res) => {
     const totalInvs = await Investment.sum('amount',  {where: { status: 'Activated' } });
     const totalRois = await Investment.sum('roi', {where: { status: 'Activated' } });
@@ -229,7 +341,6 @@ router.get('/farminvestmentdashboard', authorizedMiddleWare, async(req, res) => 
 
     res.json({totalInvs, totalInvestors, totalGains});
 })
-
 
 router.get('/farminvestmentdashboard/invInfo', authorizedMiddleWare, async(req, res) => {
     const pendingInv = await Investment.count({where: {status: 'Pending'}});
@@ -292,7 +403,6 @@ router.get('/farminvestmentdashboard/yearlyinvs', authorizedMiddleWare, async(re
     }
 })
 
-
 router.get('/farminvestmentdashboard/topfiveinvestors', authorizedMiddleWare, async(req, res) => {
     
     const {dateRange} = req.query;
@@ -331,105 +441,6 @@ router.get('/farminvestmentdashboard/topfivefarms', authorizedMiddleWare, async(
     res.json(result);
 })
 //farm investments dashboard end
-
-router.get('/:id', authorizedMiddleWare, async (req, res) => {
-    if(!req.params.id) return res.status(400).send(errorHandler(400, 'Missing id param'));
-   
-    totalInvAmount = [];
-    totalInvRoi = [];
-    filteredInv = [];
-    filteredSub = [];
-
-
-
-    // const result = await User.findOne({where: {id: req.params.id}, include: [{all: true,  nested: true, order: [['createdAt', 'DESC']]}]});
-    
-    const result = await User.findOne({where: {id: req.params.id}, order: [['createdAt', 'DESC']],
-        include: [
-            {
-                model: Investment, 
-                separate: true,
-                order: [['createdAt', 'DESC']],
-                where: {amount: {[Op.gt]: 0}},
-                required: false
-            },
-            {
-                model: Purchase, 
-                separate: true,
-                order: [['createdAt', 'DESC']],
-                where: {amount: {[Op.gt]: 0}},
-                required: false,
-                include: [
-                    {
-                        all: true,
-                        order: [['createdAt', 'DESC']],
-
-                    }
-                ]
-            },
-            {
-                model: Subscribers,
-                separate: true,
-                order: [['createdAt', 'DESC']],
-                required: false,
-                where: {amount: {[Op.gt]: 0}},
-                include: [
-                    {all: true, order: [['createdAt', 'DESC']] }
-                ]
-            }
-        ]
-    });
-
-    
-     let investments = {};
-     let subscribers = {};
-     const purchases = result.Purchases;
-
-    filteredInv = result.Investments.filter(x => x.status === 'Activated');
-    filteredSub = result.Subscribers.filter(x => x.status === 'Activated');
-
-    for(const {amount, roi} of filteredInv) {
-        totalInvAmount.push(amount);
-        totalInvRoi.push(roi);
-    }
-
-    if(totalInvAmount.length > 0 && totalInvRoi.length > 0) {
-        investments.totalInv = totalInvAmount.reduce(sumAmount);
-        investments.totalRoi = totalInvRoi.reduce(sumRoi);
-        investments.totalGain = investments.totalInv + investments.totalRoi;
-    } 
-    else {
-        investments.totalInv = 0;
-        investments.totalRoi = 0;
-        investments.totalGain = 0;
-    }
-    investments.inv = result.Investments;
-
-    if(filteredSub.length > 0) {
-        subscribers.amount = filteredSub[0].amount;
-        subscribers.roi = filteredSub[0].roi;
-        subscribers.roc = filteredSub[0].roc;
-    } else {
-        subscribers.amount = 0;
-        subscribers.roi = 0;
-        subscribers.roc = 0;
-    }
-    subscribers.subs = result.Subscribers;
-
-    return res.status(200).send({
-        status : 200,
-        user: { id: result.dataValues.id, firstName: result.dataValues.firstName,
-                middleName:  result.dataValues.middleName,
-                lastName:result.dataValues.lastName,
-                email: result.dataValues.email,
-                phoneNo: result.dataValues.phoneNo
-            },
-        investments,
-        purchases,
-        subscribers
-    });
-})
-
 
 const sumAmount = (total, num) => {
     return parseInt(total) + parseInt(num);
