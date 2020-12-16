@@ -128,6 +128,17 @@ router.put('/activatesubscriber/:id', [authorizedMiddleWare, isAdmin], async(req
             
             await deleteImage(item.proofOfPayment.match(/([^\/]+)(?=\.\w+$)/)[0]);
             //fs.unlinkSync(`./${item.proofOfPayment}`);
+
+            if(req.user.id) {
+                const request = {
+                    userId: req.user.id,
+                    forWho: 'user',
+                    message: `Hi there, your proof of payment has been confirmed and your subscription activated. Please do send us your items.`
+                }
+            
+                await Notification.create(request);
+            }
+        
             return res.status(200).send(successHandler(200, "Successfully activated"));
             
         }
@@ -234,6 +245,17 @@ router.post('/proofofpayment', [authorizedMiddleWare, upload.single('proofofpaym
                 //await sgMail.send(messages);
             }
         }
+
+        if(req.user.id) {
+            const request = {
+                userId: req.user.id,
+                forWho: 'user',
+                message: `Your file has been uploaded successfully, You will be notified when your subscription has been confirmed and activated.. Thanks.`
+            }
+        
+            await Notification.create(request);
+        }
+
         return res.status(200).send({status: 200, message: created.dataValues.id});
     } 
 
@@ -456,6 +478,10 @@ router.get('/withdrawals', authorizedMiddleWare, async (req, res) => {
 
 
 router.post('/request', authorizedMiddleWare, async (req, res) => {
+
+    const {fullName, email} = req.user;
+    if(!fullName) return res.status(401).send(errorHandler(404, 'Unauthorized'));
+
     if(!req.body || !req.body.id || !req.body.userId) return res.status(400).send(errorHandler(400, 'Bad request'));
     req.body.endDate = new Date(req.body.endDate);
     let isInvsExist;
@@ -479,11 +505,9 @@ router.post('/request', authorizedMiddleWare, async (req, res) => {
 
 
     //process user withdrawal request here
-    const {fullName} = req.user;
-    if(!fullName) return res.status(401).send(errorHandler(404, 'Unauthorized'));
-
+    
     const msg =  {
-        to: 'info@farmfundsafrica.com',
+        to: 'aminuzack7@gmail.com',
         from: `${email}`,
         subject: `Withdrawal request from ${req.body.name}`,
         html: `<p> Hi there, </p>
@@ -493,8 +517,9 @@ router.post('/request', authorizedMiddleWare, async (req, res) => {
 
     const request = {
         userId,
+        forWho: 'admin',
         serviceId: id,
-        message: `Hi there, customer ${fullName} has requested for the withdrawal of ${formatter.format(amount)} from his/her ${package} ${isInvsExist ? 'Investment' : ''}. Please respond asap.`
+        message: `Hi there, customer ${fullName} has requested for the withdrawal of ${formatter.format(amount)} from his/her ${package} ${isInvsExist ? 'Investment' : ''}.`
     }
 
     const created = await Notification.create(request);
@@ -513,12 +538,28 @@ router.post('/request', authorizedMiddleWare, async (req, res) => {
 
 });
 
+
+router.get('/notifications', [authorizedMiddleWare, isAdmin], async (req, res) => {
+    
+    const notifications = await Notification.findAll({where: {forWho: 'admin'}});
+
+    if(notifications === null) {
+        return res.status(404).send(errorHandler(404, 'Not found'));
+    }
+    return res.status(200).send(successHandler(200, notifications));
+
+})
+
 router.get('/notifications/:id', authorizedMiddleWare, async (req, res) => {
     if(!req.params.id) {
         return res.status(400).send(errorHandler(400, 'Missing id param'));
     }
 
-    const hasNotification = await Notification.findAll({where: {userId: req.params.id}});
+    const hasNotification = await Notification.findAll({where: {[Op.and]: [
+                                                                {userId: req.params.id},
+                                                                {forWho: 'user'}
+                                                              ]
+                                                            }});
     if(hasNotification === null) {
         return res.status(404).send(errorHandler(404, 'Not found'));
     }
@@ -528,6 +569,18 @@ router.get('/notifications/:id', authorizedMiddleWare, async (req, res) => {
 
 })
 
+router.put('/notifications', authorizedMiddleWare, async (req, res) => {
+    if(req.body.notifications.length <= 0) {
+        return;
+    }
+
+    for(const not of req.body.notifications) {
+        await Notification.update({isViewed: true}, {where: {id: not.id}});
+    }
+    
+    return res.status(200).send(successHandler(200, "Successfully updated"));
+
+});
 
 const ValidateContactUs = req => {
     const schema = Joi.object({
