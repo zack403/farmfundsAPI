@@ -115,6 +115,7 @@ router.post('/register', async (req, res) => {
     if(created) {
       res.status(200).send({message: 'Reset Password successful.'});
 
+      // delete all previous user request reset password data
       await PasswordResetToken.destroy({where: {[Op.and]: [
         {UserId: user.id},
         {resetToken: {[Op.ne]: token}}
